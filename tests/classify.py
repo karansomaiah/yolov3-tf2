@@ -13,8 +13,8 @@ import tensorflow_datasets as tfds
 sys.path.append("../")
 from models.backbone.darknet53 import DarkNet53
 
-NUM_CLASSES = 102
-BATCH_SIZE = 10
+NUM_CLASSES = 2
+BATCH_SIZE = 16
 NUM_EPOCHS = 100
 
 
@@ -45,11 +45,12 @@ def load_dataset():
         1.0 / 255
     )
     train_ds = tf.keras.preprocessing.image_dataset_from_directory(
-        "C:\\Users\karan\\tensorflow_datasets\\downloads\\101_ObjectCategories\\",
+        "/home/knapanda/local/casual/data/2Class/",
+        # "C:\\Users\karan\\tensorflow_datasets\\downloads\\101_ObjectCategories\\",
         validation_split=0.2,
         subset="training",
         seed=123,
-        batch_size=1,
+        batch_size=BATCH_SIZE,
     )
     train_ds_norm = train_ds.map(lambda x, y: (normalization_layer(x), y))
     train_ds_norm.cache()
@@ -58,11 +59,12 @@ def load_dataset():
     train_ds_norm.prefetch(tf.data.experimental.AUTOTUNE)
 
     val_ds = tf.keras.preprocessing.image_dataset_from_directory(
-        "C:\\Users\karan\\tensorflow_datasets\\downloads\\101_ObjectCategories\\",
+        "/home/knapanda/local/casual/data/2Class/",
+        # "C:\\Users\karan\\tensorflow_datasets\\downloads\\101_ObjectCategories\\",
         validation_split=0.2,
         subset="validation",
         seed=123,
-        batch_size=1,
+        batch_size=BATCH_SIZE,
     )
     val_ds_norm = val_ds.map(lambda x, y: (normalization_layer(x), y))
     val_ds_norm.cache()
@@ -113,15 +115,21 @@ def run_training(train_dataset, validation_dataset, model):
         test_accuracy.reset_states()
 
         # training step
-        for images, labels in train_dataset:
+        for i, (images, labels) in enumerate(train_dataset):
+            # print("epoch :{}, iter: {}, {}".format(
+                # epoch, i, images.shape
+            # ))
             with tf.GradientTape() as tape:
                 predictions = model(images, training=True)
                 loss = loss_object(labels, predictions)
+                # print("predictions: {}".format(predictions))
+                # print("loss: {}".format(losatch dekh re dars))
 
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
             train_loss(loss)
             train_accuracy(labels, predictions)
+            # print("End iter: {}".format(i))
 
         # testing step
         for test_images, test_labels in validation_dataset:
@@ -144,5 +152,5 @@ def run_training(train_dataset, validation_dataset, model):
 
 if __name__ == "__main__":
     classifier = build_classification_model()
-    # 6train_data, validation_data = load_dataset()
-    # run_training(train_data, validation_data, classifier)
+    train_data, validation_data = load_dataset()
+    run_training(train_data, validation_data, classifier)
