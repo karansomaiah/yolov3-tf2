@@ -2,7 +2,7 @@
 from tensorflow import keras
 
 # Localization Loss
-def l1_loss():
+def l1_loss()
 def weighted_l1_loss()
 def smooth_l1_loss()
 def weighted_smooth_l1_loss()
