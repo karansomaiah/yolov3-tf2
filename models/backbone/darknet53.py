@@ -119,6 +119,7 @@ class DarkNet53(Model):
         )
         self.block5 = self.build_blocks("block5", self.conv_blocks["block5"])
         self.flatten = Flatten()
+        self.feature_outputs = []
 
     def call(self, x):
         x = self.conv1(x)
@@ -176,40 +177,42 @@ class DarkNet53(Model):
 
         _ = self.call(inputs)
 
-    def build_blocks(self, block_name, block):
-        """Builds a skip-connection inspired DarkNet block.
+    # def build_blocks(self, block_name, block):
+    #     """Builds a skip-connection inspired DarkNet block.
 
-        Args:
-            block (str, dict): Dictionary holding block information
-            Example:
-            {
-                "input": "conv5",
-                "design": [(256, 1, 1, 1), (512, 3, 3, 1)] * 8,
-                "residual": True,
-            }
-        """
-        block_prefix = str(block_name)
-        residual_blocks = []
-        num_block_convs = len(block["design"])
+    #     Args:
+    #         block (str, dict): Dictionary holding block information
+    #         Example:
+    #         {
+    #             "input": "conv5",
+    #             "design": [(256, 1, 1, 1), (512, 3, 3, 1)] * 8,
+    #             "residual": True,
+    #         }
+    #     """
+    #     block_prefix = str(block_name)
+    #     residual_blocks = []
+    #     num_block_convs = len(block["design"])
 
-        for block_num in range(num_block_convs):
-            conv_name = block_prefix + "_conv_" + str(block_num + 1)
-            conv_filters, kernel_size, height_stride, width_stride = block["design"][
-                block_num
-            ]
-            residual_blocks.append(
-                keras.layers.Conv2D(
-                    conv_filters,
-                    kernel_size,
-                    (height_stride, width_stride),
-                    padding="same",
-                    data_format="channels_last",
-                    activation=None,
-                    name=conv_name,
-                )
-            )
-            residual_blocks.append(
-                keras.layers.LeakyReLU(alpha=0.3, name=conv_name + "_leaky")
-            )
+    #     for block_num in range(num_block_convs):
+    #         conv_name = block_prefix + "_conv_" + str(block_num + 1)
+    #         conv_filters, kernel_size, height_stride, width_stride = block["design"][
+    #             block_num
+    #         ]
+    #         residual_blocks.append(
+    #             keras.layers.Conv2D(
+    #                 conv_filters,
+    #                 kernel_size,
+    #                 (height_stride, width_stride),
+    #                 padding="same",
+    #                 data_format="channels_last",
+    #                 activation=None,
+    #                 name=conv_name,
+    #             )
+    #         )
+    #         residual_blocks.append(
+    #             keras.layers.LeakyReLU(alpha=0.3, name=conv_name + "_leaky")
+    #         )
 
-        return residual_blocks
+    #     return residual_blocks
+
+    def residual_blocks(input, config, output):
