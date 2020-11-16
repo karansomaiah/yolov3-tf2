@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 class Layer(object):
     def __init__(self, name, *args, **kwargs):
         self.name = name
@@ -12,7 +13,7 @@ class Layer(object):
         return self.name
 
     def __eq__(self, other):
-        if not isinstance(other, MyClass):
+        if not isinstance(other, Layer):
             return NotImplemented
         return self.name == other.name
 

@@ -1,8 +1,17 @@
 #!/usr/bin/env python
 import cv2
+from collections import namedtuple, OrderedDict
 
 # CONSTANTS
+INPUT_H = 416
+INPUT_W = 416
+NUM_CHANNELS = 3
+IGNORE_LAYER_INDEX = -1
+DEFAULT_LAYER_ARG = -1
 LAYER_TYPES = ["convolution", "residual", "connection", "route", "yolo", "upsample"]
+
+# DataTypes
+LayerTuple = namedtuple("LayerTuple", ["call", "args", "index"])
 
 # UTILITY FUNCTIONS
 def read_image(file_path, size):

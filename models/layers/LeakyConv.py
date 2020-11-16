@@ -3,14 +3,9 @@ import tensorflow.keras as keras
 
 from tensorflow.keras.layers import Layer, Conv2D, LeakyReLU
 
+
 class LeakyConvolution(Layer):
-    def __init__(self,
-                 filters,
-                 kernel_size,
-                 strides,
-                 padding,
-                 data_format,
-                 activation):
+    def __init__(self, filters, kernel_size, strides, padding, data_format, activation):
         super(LeakyConvolution, self).__init__()
         self.filters = filters
 
@@ -26,20 +21,17 @@ class LeakyConvolution(Layer):
 
         self.padding = padding
         self.data_format = data_format
-        assert(activation == None)
+        assert activation == None
 
         self.conv = Conv2D(
-            filters=layer_def.num_kernels,
-            kernel_size=(layer_def.kernel_h,
-                         layer_def.kernel_w),
-            strides=(layer_def.stride_h,
-                     layer_def.stride_w),
+            filters=self.filters,
+            kernel_size=self.kernel_size,
+            strides=self.strides,
             padding="same",
             data_format="channels_last",
-            activation=None
+            activation=None,
         )
         self.leaky_relu = LeakyReLU(alpha=0.3)
-
 
     def call(self, input):
         x = self.conv(input)
