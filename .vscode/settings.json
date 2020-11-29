@@ -3,10 +3,15 @@
    "python.linting.pylintEnabled": false,
    "python.linting.flake8Enabled": false,
    "python.linting.enabled": false,
-   "python.formatting.provider": "black",
+   "python.formatting.provider": "autopep8",
    "editor.formatOnSave": true,
    "editor.defaultFormatter": null,
-   "[python]":{
-      "editor.tabSize": 4
-    }
+   "[python]": {
+      "editor.tabSize": 4,
+      "editor.rulers": [
+         120
+      ],
+      "editor.formatOnSave": true,
+      "editor.formatOnSaveMode": "file"
+   }
 }

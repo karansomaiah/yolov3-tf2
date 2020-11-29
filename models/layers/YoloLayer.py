@@ -5,7 +5,7 @@ class YoloLayer(Layer):
     """Yolo Detection Layer."""
 
     def __init__(self, anchors, num_classes=1, **kwargs):
-        super(YoloLayer, self).__init__(name=name, **kwargs)
+        super(YoloLayer, self).__init__()
         self.num_channels = num_channels = (5 + num_classes) * len(anchors)
         self.yolo_layer = Conv2D(
             filters=num_channels,
