@@ -3,9 +3,20 @@
 It's currently a work in progress!
 
 To-Do:
-1. Verfiy Darknet53 implementation can classify on a well known classification problem with a high score.
-2. Implement YOLO layer
-3. Verify Detection Head Outputs
-4. Verify expected loss, gradients and back-prop.
-5. Create skip-connection based custon ResNet-like Darknet conv layers, yolo-layer, etc.
-6. Code cleanup and reusability changes.
+1. Config for kicking off training.
+    a. Pretrained model
+    b. Train Configuration
+    c. Save directory
+    d. Evaluation Script
+    e. Inference Script
+2. Loss
+    a. Implement and verify all kinds of losses.
+    b. Implement a config for losses.
+3. Loading from pre-trained models from darknet
+4. Conversion to TensorRT.
+
+Tasks:
+1. Write a train step, verify distribution strategy.
+2. Overfit on one image
+3. Conversion to TensorRT
+4. Eval/Predict step.

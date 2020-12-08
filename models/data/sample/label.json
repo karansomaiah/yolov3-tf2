@@ -1,1 +1,0 @@
-{"classes": {"Dog": 1}, "annotations": [{"image_path": "/home/knapanda/local/casual/yolov3-tf2/models/data/sample/dog.jpg", "bboxes": [[337, 337, 315, 375]], "classes": ["Dog"]}]}

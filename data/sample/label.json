@@ -1,0 +1,1 @@
+{"classes": {"Dog": 1}, "annotations": {"train": [{"image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg", "bboxes": [[337, 337, 315, 375]], "classes": ["Dog"]}], "validation": [{"image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg", "bboxes": [[337, 337, 315, 375]], "classes": ["Dog"]}]}}

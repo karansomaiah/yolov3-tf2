@@ -1,180 +1,346 @@
 #!/usr/bin/env python
-
-import tensorflow as tf
-import tensorflow.keras as keras
-
 """
 Set detection losses for outputs
 """
 
+import tensorflow as tf
+import tensorflow.keras as keras
+# from losses import *
+from utils.box_utils import box_iou_tf
+from utils.utils import INT, FLOAT, BOOL
 
-def calculate_loss()
+
+current_loss_map: {
+    'mse' : keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM),
+    'bce' : keras.losses.BinaryCrossentropy()
+}
 
 
-def wh_iou(tensora_a, tensor_b):
+def get_grid_shapes(detections):
+    return [
+       (detection.shape[1], detection.shape[2]) for detection in detections
+    ]
+
+
+def get_grid_offsets(grid_x_num, grid_y_num):
     """
-    ground_truth x anchor
     """
-    a_shape = tensor_a.shape
-    b_shape = tensor_b.shape
+    intermediate_center_x_offset = tf.broadcast_to(
+        tf.range(grid_x_num, dtype=tf.float32),
+        [grid_y_num, grid_x_num]
+    )
+    center_x_offsets = tf.broadcast_to(
+        intermediate_center_x_offset,
+        [batch_size, grid_y_num, grid_x_num]
+    )
+    intermediate_center_y_offset = tf.broadcast_to(
+        tf.range(grid_y_num, dtype=tf.float32),
+        [grid_x_num, grid_y_num]
+    )
+    intermediate_center_y_offset = tf.transpose(intermediate_center_y_offset)
+    center_y_offsets = tf.broadcast_to(
+        intermediate_center_y_offset,
+        [batch_size, grid_y_num, grid_x_num]
+    )
+    return center_x_offsets, center_y_offsets
 
-    combined = tf.concat(
-        [
+
+def get_anchor_wh_offsets(w_index,
+                          h_index,
+                          anchors,
+                          grid_x,
+                          grid_y,
+                          batch_size):
+    anchor_size = anchors.shape[0]
+    w_offsets = tf.broadcast_to(
+        tf.expand_dims(
             tf.broadcast_to(
-                tf.reshape(
-                    a,
-                    shape=(a_shape[0], 1, a_shape[1], 1)
-                ),
-                [a_shape[0], b_shape[0], a_shape[1], 1]
-            ),
+                tf.expand_dims(
+                    tf.broadcast_to(
+                        tf.expand_dims(anchors[:, w_index], axis=-1), 
+                        [anchor_size, grid_y]), 
+                    axis=-1), 
+                [anchor_size, grid_y, grid_x]), 
+            axis=0), 
+        [batch_size, anchor_size, grid_y, grid_x]
+    )
+
+    h_offsets = tf.broadcast_to(
+        tf.expand_dims(
             tf.broadcast_to(
-                tf.reshape(
-                    b,
-                    shape=(1, b_shape[0], b_shape[1], 1)
-                ),
-                [a_shape[0], b_shape[0], b_shape[1], 1]
-            )
-        ],
+                tf.expand_dims(
+                    tf.broadcast_to(
+                        tf.expand_dims(anchors[:, h_index], axis=-1), 
+                        [anchor_size, grid_y]), 
+                    axis=-1), 
+                [anchor_size, grid_y, grid_x]), 
+            axis=0), 
+        [batch_size, anchor_size, grid_y, grid_x]
+    )
+    return w_offsets, h_offsets
+
+
+def convert_gt_for_loss(ground_truth,
+                        prior_x,
+                        prior_y,
+                        matched_anchors,
+                        image_width,
+                        image_height,
+                        grid_x,
+                        grid_y):
+    w_index = 0
+    h_index = 1
+    x_index, y_index, w_index, h_index = 0, 1, 2, 3
+
+    ground_truth_x = (ground_truth[:, x_index] * grid_x) - prior_x
+    ground_truth_y = (ground_truth[:, y_index] * grid_y) - prior_y
+    ground_truth_w = tf.math.log(ground_truth[:, w_index] * (image_width/matched_anchors[:, w_index]))
+    ground_truth_h = tf.math.log(ground_truth[:, h_index] * (image_height/matched_anchors[:, h_index]))
+
+    return tf.stack(
+        [ground_truth_x,
+         ground_truth_y,
+         ground_truth_w,
+         ground_truth_h],
         axis=-1
     )
 
-    inter_area = tf.reduce_prod(tf.reduce_min(combined, axis=-1), axis=-1)
-    outer_area = tf.reduce_sum(tf.reduce_prod(combined, axis=-2), axis=-1) - inter_area
-    iou = outer_area/inter_area
-    return iou
+
+def get_localization_loss(true, pred):
+    return current_loss_map['mse'](true, pred)
 
 
-def generate_gt(pred_boxes,
-                pred_cls,
-                target,
-                anchors,
-                ignore_thresh):
-    """ 
-    Build groud truth and create masks to calculate loss against    
+def get_noobj_loss(true, pred):
+    return current_loss_map['bce'](true, pred)
 
-        Assumption here is,
-        target is of style
-        batch_index, class, x, y, w, h
+
+def get_obj_loss(true, pred):
+    return current_loss_map['bce'](true, pred)
+
+
+def get_class_loss(true, pred):
+    return current_loss_map['bce'](true, pred)
+
+
+def get_loss_per_grid_detection(detection_output,
+                                ground_truth,
+                                anchors,
+                                grid_shape,
+                                image_wh,
+                                batch_size,
+                                num_classes):
+    losses = {
+        'regression_loss': 0.0,
+        'objectness_loss': 0.0,
+        'noobjectness_loss': 0.0,
+        'classification_loss': 0.0,
+        'total_loss': 0.0
+    }
+
+    num_anchors = len(anchors_list)
+    grid_x, grid_y = grid_shape
+    image_width, image_height = image_wh
+    width_downsampling_factor = image_width/grid_x
+    height_downsampling_factor = image_height/grid_y
+    num_channels = detection_output.shape[-1]
+    prediction_channels = num_channels/num_anchors
+    num_gt = ground_truth.shape[0]
+
+    # ground truth tensors
+    ground_truth_bbox = ground_truth[:, 1:-1]
+    ground_truth_wh_bbox = tf.concat(
+        [
+            tf.zeros_like(ground_truth_bbox[:, -2:]),
+            ground_truth_bbox[:, -2:]
+        ],
+        axis=-1
+    )
+    ground_truth_classes = tf.cast(ground_truth[:, -1], dtype=INT)
+    ground_truth_classes_onehot = tf.one_hot(ground_truth_classes, depth=num_classes) 
+    ground_truth_batch_indices = tf.cast(ground_truth[:, 0], dtype=INT)
+    ground_truth_x = ground_truth_bbox[:, 0]
+    ground_truth_y = ground_truth_bbox[:, 1]
+    ground_truth_x_scaled = ground_truth_x * grid_x
+    ground_truth_y_scaled = ground_truth_y * grid_y
+
+    # anchors tensor
+    anchors_tensor = tf.constant(anchors, dtype=FLOAT)
+    anchors_normalized = tf.math.divide(anchors_tensor,
+                                        tf.broadcast_to(
+                                            tf.expand_dims(
+                                                tf.constant([float(image_width), float(image_height)], dtype=FLOAT), 
+                                                axis=0),
+                                            [anchors_tensor.shape[0], anchors_tensor.shape[1]]
+                                        )
+                                       )
+    anchors_normalized_bbox = tf.concat(
+        [tf.zeros_like(anchors_normalized),
+         anchors_normalized],
+        axis=-1
+    )
+
+    # x & y - offsets
+    center_x, center_y = get_grid_offsets(grid_x,
+                                          grid_y)
+    
+    # reshape output tensor to [batch_size, 
+    #                           anchor_size, 
+    #                           grid_x, 
+    #                           grid_y, 
+    #                           pred_channels]
+    output_reshaped = tf.reshape(detection_output,
+                                 [batch_size, 
+                                  num_anchors, 
+                                  grid_y, 
+                                  grid_x, 
+                                  prediction_channels])
+
+    # separate into bounding boxes, objectness score and classes
+    output_bboxes = output_reshaped[:, :, :, :, :4] # first four indices are bounding box predictions
+    output_objectness = output_reshaped[:, :, :, 4] # fifth index is objectness score
+    output_classes = output_reshaped[:, :, :, :, 5:] # 6th onwards are class predictons
+    predicted_objectness = tf.math.sigmoid(output_objectness)
+    predicted_classes = tf.math.sigmoid(output_classes)
+
+    # get predictions
+    # first get anchor offsets to be added
+    w_index = 0
+    h_index = 1
+    w_offsets, h_offsets = get_anchor_wh_offsets(w_index,
+                                                 h_index,
+                                                 anchors,
+                                                 grid_x,
+                                                 grid_y,
+                                                 batch_size)
+
+    predicted_x = (tf.math.sigmoid(output_bboxes[..., 0]) + center_x) / grid_x
+    predicted_y = (tf.math.sigmoid(output_bboxes[..., 1]) + center_y) / grid_y
+    predicted_w = (tf.exp(output_bboxes[..., 2]) * w_offsets)/image_width
+    predicted_h = (tf.exp(output_bboxes[..., 3]) * h_offsets)/image_height
+
+    # get iou between groundtruth and prior box anchors
+    iou_anchor_gt = box_iou_tf(anchors_normalized_bbox, ground_truth_wh_bbox)
+    max_iou_anchor_indices = tf.cast(tf.argmax(iou_anchor_gt, axis=-1), dtype=INT)
+    max_iou_anchor_indices_extra_dim = tf.stack([tf.zeros_like(max_iou_anchor_indices, dtype=INT),
+                                                 max_iou_anchor_indices],
+                                                axis=-1)
+
+    # ground truth prior box indiices
+    priors_x = tf.cast(ground_truth_x_scaled, dtype=INT)
+    priors_y = tf.cast(ground_truth_y_scaled, dtype=INT)
+    prior_indices = tf.stack([ground_truth_batch_indices,
+                              max_iou_anchor_indices,
+                              priors_y,
+                              priors_x])
+    anchors_broadcasted = tf.broadcast_to(anchors_tensor,
+                                          (num_gt, ) + anchors.shape)
+    matched_anchors = tf.gather_nd(anchors_broadcasted, max_iou_anchor_indices_extra_dim)
+    # get the converted gt and the matched priors from predictions
+    priors_from_preds = tf.gather_nd(output_bboxes, prior_indices)
+    converted_gt = convert_gt_for_loss(ground_truth_bbox,
+                                       priors_x, priors_y,
+                                       matched_anchors,
+                                       image_width,
+                                       image_height,
+                                       grid_x,
+                                       grid_y)
+    # at this step, you can get localization loss from priors_from_preds
+    # and converted_gt
+    localization_loss = get_localization_loss(converted_gt, priors_from_preds)
+
+    # get no_obj loss, obj loss and classification loss.
+    # noobj loss
+    predicted_bboxes = tf.stack([predicted_x,
+                                 predicted_y,
+                                 predicted_w,
+                                 predicted_h],
+                                axis=-1)
+    predicted_bboxes_flattened = tf.reshape(predicted_bboxes, [-1, 4]) # flatten all bounding boxes to a Tensor of rank 2
+    iou_predictions_gt = box_iou_tf(predicted_bboxes_flattened, ground_truth_bbox)
+ 
+    # get noobj_masks
+    noobj_mask_candidates = tf.where(
+        tf.math.reduce_max(iou_predictions_gt,
+                           axis=-1) > 0.5, # ignore_threshold
+        False,
+        True
+    )
+    noobj_mask = tf.cast(noobj_mask_candidates, dtype=INT)
+    noobj_gt = tf.boolean_mask(tf.cast(noobj_mask, dtype=FLOAT),
+                               noobj_mask)
+    noobj_predictions = tf.boolean_mask(tf.reshape(predicted_objectness, [-1]))
+    # get BCE Loss for no objectness
+    noobj_loss = get_noobj_loss(noobj_gt, noobj_predictions)
+
+    # Objectness
+    objectness_predictions = tf.gather_nd(predicted_objectness,
+                                          prior_indices)
+    objectness_gt = tf.ones_like(objectness_predictions)
+    # get BCE Loss for objectness
+    obj_loss = get_obj_loss(objectness_gt, objectness_predictions)
+
+    # bce loss for classes
+    class_predictions = tf.gather_nd(predicted_classes, prior_indices)
+    class_gt = ground_truth_classes_onehot
+    # get bce loss for classes
+    class_loss = get_class_loss(class_gt, class_predictions)
+
+    # final losses per detection grid
+    losses['regression_loss'] = localization_loss * 10.0 # scale
+    losses['objectness_loss'] = obj_loss * 10.0 # scale
+    losses['noobjectness_loss'] = noobj_loss * 10.0 # scale
+    losses['classification_loss'] = class_loss * 10.0 # scale
+    losses['total_loss'] = localization_loss + obj_loss + noobj_loss + class_loss
+
+    return losses
+
+
+def detection_loss(detection_outputs,
+                   ground_truth,
+                   batch_size,
+                   image_height,
+                   image_width,
+                   num_classes,
+                   anchors_list):
+    """detection_loss.
+
+    :param detection_outputs:
+    :param ground_truth:
+    :param batch_size:
+    :param image_height:
+    :param image_width:
+    :param num_classes:
+    :param anchors_list:
     """
-    BATCH_SIZE = pred_boxes.shape(0)
-    ANCHOR_SIZE = pred_boxes.shape(1)
-    GRID_X, GRID_Y = pred_boxes.shape(2), pred_boxes.shape(3)
-    CLASSES_SIZE = pred_cls.shape(-1)
+    # check detection output is list
+    assert type(detection_outputs) == list, "detection_outputs" \
+        "type {} is not of type list".format(type(detection_outputs))
+    # check size of list of anchors is equal to length of detection outputs
+    # i.e. 3 anchors and 3 detection_outputs.
+    assert len(detection_outputs) == len(anchors_list), \
+        "Number of outputs from detection_outputs({})" \
+        "is not equal to anchors_list({})".format(len(detection_outputs),
+                                                  len(anchors_list))
+    # check each detection output tensor is a rank 4 tensor
+    # [batch_index, grid_x, grid_y, num_classes + 5]
+    for detection_output in detection_outputs:
+        assert len(detection_output.shape) == 4, \
+            "detection_outputs member not in shape."\
+            "Has shape {}".format(detection_output.shape)
 
-    GRID_SHAPE = (BATCH_SIZE, ANCHOR_SIZE, GRID_X, GRID_Y)
+    # get some required tensors
+    # grid_shapes
+    grid_shapes = get_grid_shapes(detection_outputs)
 
-    obj_mask = tf.zeros(GRID_SHAPE, dtype=tf.float32)
-    noobj_mask = tf.ones(GRID_SHAPE, dtype=tf.float32)  # odd man out.
-    class_mask = tf.zeros(GRID_SHAPE, dtype=tf.float32)
-    iou_scores = tf.zeros(GRID_SHAPE, dtype=tf.float32)
-    tx = tf.zeros(GRID_SHAPE, dtype=tf.float32)
-    ty = tf.zeros(GRID_SHAPE, dtype=tf.float32)
-    tw = tf.zeros(GRID_SHAPE, dtype=tf.float32)
-    th = tf.zeros(GRID_SHAPE, dtype=tf.float32)
+    detection_losses = []
+    for detection_index, detection_output in enumerate(detection_outputs):
+        current_detection_loss = get_loss_per_grid_detection(detection_output,
+                                                             ground_truth,
+                                                             anchors_list,
+                                                             grid_shapes,
+                                                             (image_width, image_height),
+                                                             batch_size,
+                                                             num_classes)
+        detection_losses.append(current_detection_loss)
 
-    target_bboxes = target[:, 2:6] * GRID_X
-
-    gxy = target_bboxes[:, :2]
-    gwh = target_bboxes[:, 2:]
-
-    ious = wh_iou(gwh, tf.convert_to_tensor(anchors))
-
-
-
-def get_grid_count(tensor):
-    return tensor.shape(1), tensor.shape(2)
-
-
-def get_grid_offsets(grid_x_num, grid_y_num, num_anchors):
-    basic_cx = tf.broadcast_to(tf.range(grid_x_num))
-    basic_cy = tf.transpose(cx)
-    cx = tf.broadcast_to(cx, [1, num_anchors, grid])
-    return cx, cy
-
-
-def get_scaled_anchors(anchors, feature_map_shape, image_shape):
-    stride_w = int(image_shape[0]/feature_map_shape[0])
-    stride_h = int(image_shape[1]/feature_map_shape[1])
-
-    scaled_anchors = [((anchor_w/stride_w), (anchor_h/stride_h))
-                      for anchor_w, anchor_h in anchors]
-
-    scaled_anchor_w = tf.convert_to_tensor(
-        [w for w, _ in scaled_anchors], dtype=tf.float32)
-
-    scaled_anchor_w_reshaped = tf.reshape(
-        scaled_anchor_w, [-1, len(anchors), 1, 1])
-
-    scaled_anchor_h = tf.convert_to_tensor(
-        [h for _, h in scaled_anchors], dtype=tf.float32)
-
-    scaled_anchor_h_reshaped = tf.reshape(
-        scaled_anchor_h, [-1, len(anchors), 1, 1])
-    return tf.convert_to_tensor([[anchor_w, anchor_h] for anchor_w, anchor_h in scaled_anchors], dtype=tf.float32), scaled_anchor_w_reshaped, scaled_anchor_h_reshaped
-
-
-def stage_outputs(detection_tensor):
-    x = tf.sigmoid(detection_output[..., 0])
-    y = tf.sigmoid(detection_output[..., 1])
-    w = tf.exp(detection_output[..., 2])
-    h = tf.exp(detection_output[..., 3])
-
-    pred_conf = tf.sigmoid(detection_output[..., 4])
-    pred_cls = tf.sigmoid(detection_output[..., 5:])
-
-    return x, y, w, h, pred_conf, pred_cls
-
-
-def segregate_output(detection_output,
-                     targets,
-                     anchors,
-                     im_height,
-                     im_width):
-    """
-    Segragate output separates the detection output in tx, ty, tw, th, confidences for each class.
-    Assume the detection_output tensor is of shape [batch_size, grid_x, grid_y, (num_classes+5) * 3]
-
-    detection_output is a list of outputs from each of the yolo layers
-    """
-    BATCH_SIZE = detection_output[0].shape(0)
-    num_anchors = len(anchors)
-
-    # Determine grid sizes
-    feature_map_shapes = [(get_grid_count(output))
-                          for output in detection_output]
-    feature_map_offsets = [(get_grid_offsets(grid_x, grid_y))
-                           for grid_x, grid_y in feature_map_shapes]
-    feature_map_grid_x_offsets = [tf.reshape(
-        grid_offset[0]) for grid_offset in feature_map_offsets]
-    feature_map_grid_y_offsets = [tf.reshape(
-        grid_offset[1]) for grid_offset in feature_map_offsets]
-
-    for detection_index, detection in enumerate(detection_output):
-        # reshape to [BATCH_SIZE, NUM_ANCHORS, GRID_X, GRID_Y, NUM_CLASSES+5]
-        detection_reshaped = tf.reshape(detection, [
-                                        BATCH_SIZE,
-                                        num_anchors,
-                                        feature_map_shapes[detection_index][0],
-                                        feature_map_shapes[detection_index][1],
-                                        -1])
-        detection_anchors, detection_anchor_w, detection_anchor_h = get_scaled_anchors(anchors[detection_index],
-                                                                                       (feature_map_shapes[detection_index][0], feature_map_shapes[detection_index][1]),
-                                                                                       (im_width, im_height))
-
-        x, y, w, h, pred_conf, pred_cls = stage_outputs(detection)
-
-        x = x + feature_map_grid_x_offsets[detection_index]
-        y = y + feature_map_grid_y_offsets[detection_index]
-        w = w + detection_anchor_w
-        h = h + detection_anchor_h
-
-        predicted_bboxes = tf.stack([x, y, w, h])
-
-        outputs = None  # To-Do
-
-        iou_scores, class_mask, obj_mask, noobj_mask, tx, ty, tw, th, tcls, tconf = generate_gt(
-            pred_boxes=predicted_bboxes,
-            pred_cls=pred_cls,
-            target=targets,
-            anchors=detection_anchors,
-            ignore_threshold=0.6)
+    return detection_losses

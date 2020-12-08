@@ -3,6 +3,7 @@
 Dataloader functionality for datasets
 """
 
+import cv2
 import json
 import tensorflow
 
@@ -10,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
 
-class_map = {"Dog": 1}
+class_map = {"Dog": 0}
 
 
 def read_label_json(filepath):
@@ -86,14 +87,20 @@ def process_annotation(annotation_dict, input_height, input_width):
 def process_labels(labels):
     labels_numpy = []
     for label in labels:
-        num = len(label["classes"])
         label_bbox_np = label["bboxes"]
         label_class_np = np.expand_dims(
             np.array(label["classes"], dtype=np.float32), axis=1
         )
-        label_np = np.concatenate((label_bbox_np, label_class_np), axis=0)
+        label_np = np.concatenate((label_bbox_np, label_class_np), axis=-1)
         labels_numpy.append(label_np)
     return label_np
+
+
+def reader(image, label):
+    image = tf.io.read_file(image)
+    image = tf.image.decode_jpeg(image, channels=3)
+    image = tf.image.resize(image, [416, 416])
+    return image, label
 
 
 def tf_dataloader(config_filepath):
@@ -105,11 +112,22 @@ def tf_dataloader(config_filepath):
     # read annotations
     annotations = read_label_json(annotation_filename)
     train_images, train_labels, val_images, val_labels = process_annotation(
-        annotation_filename, input_height, input_width
+        annotations, input_height, input_width
     )
 
     # processed labels
-    labels = process_labels(labels)
+    train_labels = process_labels(train_labels)
+    val_labels = process_labels(val_labels)
 
     tf_train_dataset = tf.data.Dataset.from_tensor_slices((train_images, train_labels))
+    tf_train_dataset = tf_train_dataset.map(reader)
+    tf_train_dataset = tf_train_dataset.repeat(90)
+    #tf_train_dataset = tf_train_dataset.batch(5)
+
     tf_val_dataset = tf.data.Dataset.from_tensor_slices((val_images, val_labels))
+    tf_val_dataset = tf_val_dataset.map(reader)
+    tf_val_dataset = tf_val_dataset.repeat(10)
+    #tf_val_dataset = tf_val_dataset.batch(5)
+
+    return tf_train_dataset, tf_val_dataset
+
