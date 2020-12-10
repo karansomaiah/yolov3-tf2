@@ -312,6 +312,7 @@ def detection_loss(detection_outputs,
     :param num_classes:
     :param anchors_list:
     """
+    print("In Loss")
     # check detection output is list
     assert type(detection_outputs) == list, "detection_outputs" \
         "type {} is not of type list".format(type(detection_outputs))
@@ -336,11 +337,11 @@ def detection_loss(detection_outputs,
     for detection_index, detection_output in enumerate(detection_outputs):
         current_detection_loss = get_loss_per_grid_detection(detection_output,
                                                              ground_truth,
-                                                             anchors_list,
+                                                             anchors_list[detection_index],
                                                              grid_shapes,
                                                              (image_width, image_height),
                                                              batch_size,
                                                              num_classes)
         detection_losses.append(current_detection_loss)
 
-    return detection_losses
+    return sum([loss['total_loss'] for loss in detection_losses])

@@ -1,1 +1,81 @@
-{"classes": {"Dog": 1}, "annotations": {"train": [{"image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg", "bboxes": [[337, 337, 315, 375]], "classes": ["Dog"]}], "validation": [{"image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg", "bboxes": [[337, 337, 315, 375]], "classes": ["Dog"]}]}}
+{
+    "classes": {
+        "Dog": 0
+    },
+    "annotations": {
+        "train": [
+            {
+                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg",
+                "bboxes": [
+                    [
+                        337,
+                        337,
+                        315,
+                        375
+                    ]
+                ],
+                "classes": [
+                    "Dog"
+                ]
+            },
+            {
+                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog2.jpg",
+                "bboxes": [
+                    [
+                        207,
+                        359,
+                        250,
+                        396
+                    ],
+                    [
+                        459,
+                        344,
+                        247,
+                        379
+                    ]
+                ],
+                "classes": [
+                    "Dog",
+                    "Dog"
+                ]
+            }
+        ],
+        "validation": [
+            {
+                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg",
+                "bboxes": [
+                    [
+                        337,
+                        337,
+                        315,
+                        375
+                    ]
+                ],
+                "classes": [
+                    "Dog"
+                ]
+            },
+            {
+                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog2.jpg",
+                "bboxes": [
+                    [
+                        207,
+                        359,
+                        250,
+                        396
+                    ],
+                    [
+                        459,
+                        344,
+                        247,
+                        379
+                    ]
+                ],
+                "classes": [
+                    "Dog",
+                    "Dog"
+                ]
+            }
+        ]
+    }
+}
