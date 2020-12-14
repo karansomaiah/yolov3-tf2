@@ -1,1 +1,1 @@
-{"INPUT_W": 416, "INPUT_H": 416, "annotation_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/label.json", "create_tfrecords": 1}
+{"INPUT_W": 416, "INPUT_H": 416, "annotation_path": "data/sample/label.json", "create_tfrecords": 1}

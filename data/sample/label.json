@@ -5,13 +5,13 @@
     "annotations": {
         "train": [
             {
-                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg",
+                "image_path": "data/sample/dog.jpg",
                 "bboxes": [
                     [
-                        337,
-                        337,
-                        315,
-                        375
+                        212,
+                        215,
+                        195,
+                        240
                     ]
                 ],
                 "classes": [
@@ -19,19 +19,19 @@
                 ]
             },
             {
-                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog2.jpg",
+                "image_path": "data/sample/dog2.jpg",
                 "bboxes": [
                     [
-                        207,
-                        359,
-                        250,
-                        396
+                        157,
+                        215,
+                        165,
+                        240
                     ],
                     [
-                        459,
-                        344,
-                        247,
-                        379
+                        297,
+                        222,
+                        160,
+                        246
                     ]
                 ],
                 "classes": [
@@ -42,13 +42,13 @@
         ],
         "validation": [
             {
-                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog.jpg",
+                "image_path": "data/sample/dog.jpg",
                 "bboxes": [
                     [
-                        337,
-                        337,
-                        315,
-                        375
+                        219,
+                        219,
+                        204,
+                        243
                     ]
                 ],
                 "classes": [
@@ -56,19 +56,19 @@
                 ]
             },
             {
-                "image_path": "/home/knapanda/local/casual/yolov3-tf2/data/sample/dog2.jpg",
+                "image_path": "data/sample/dog2.jpg",
                 "bboxes": [
                     [
-                        207,
-                        359,
-                        250,
-                        396
+                        134,
+                        233,
+                        162,
+                        257
                     ],
                     [
-                        459,
-                        344,
-                        247,
-                        379
+                        298,
+                        223,
+                        160,
+                        246
                     ]
                 ],
                 "classes": [
