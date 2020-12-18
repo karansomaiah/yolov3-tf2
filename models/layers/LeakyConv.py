@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras as keras
 
-from tensorflow.keras.layers import Layer, Conv2D, LeakyReLU
+from tensorflow.keras.layers import Layer, Conv2D, LeakyReLU, BatchNormalization
 
 
 class LeakyConvolution(Layer):
@@ -44,6 +44,7 @@ class LeakyConvolution(Layer):
                 data_format="channels_last",
                 activation=None,
             )
+        self.bn = BatchNormalization()
         self.leaky_relu = LeakyReLU(alpha=0.3)
 
     # def build(self, input_shape):
@@ -59,4 +60,5 @@ class LeakyConvolution(Layer):
 
     def call(self, input):
         x = self.conv(input)
+        x = self.bn(x)
         return self.leaky_relu(x)

@@ -22,7 +22,7 @@ from cfg import config_reader
 GLOBAL_BATCH_SIZE = 4
 NUM_GPUS = 2
 BATCH_SIZE = int(GLOBAL_BATCH_SIZE / NUM_GPUS)
-NUM_EPOCHS = 500
+NUM_EPOCHS = 50
 NUM_REPLICAS = 1
 
 
@@ -44,8 +44,13 @@ if __name__ == "__main__":
 
         detection_model = Detector(parsed_config, 1)
         detection_model = detection_model.build_model((416, 416, 3))
+        # detection_model.summary()
+        detection_model.layers[0].trainable = False
+        # for layer in detection_model.layers:
+        #    print(layer.name, layer.trainable)
 
-        optimizer = tf.keras.optimizers.SGD(learning_rate=0.0001, momentum=0.9)
+        optimizer = tf.keras.optimizers.Adam()
+        # optimizer = tf.keras.optimizers.SGD(learning_rate=0.00001, momentum=0.9)
         saver = tf.train.Checkpoint(optimizer=optimizer, model=detection_model)
 
         def train_step(inputs):
@@ -134,6 +139,7 @@ if __name__ == "__main__":
             print(epoch_template.format(epoch, loss_per_epoch / iteration))
             saved_model_dir = "/home/karan/Checkpoint/ckpt"
             saver.save(saved_model_dir)
+            # detection_model.save(saved_model_dir)
     # ---------------------- END OF DISTRIBUTED TRAINING -------------------------#
 
     # --------------------- START OF MANUAL TRAINING -------------------------#
@@ -145,8 +151,14 @@ if __name__ == "__main__":
 
     # detection_model = Detector(parsed_config, 1)
     # detection_model = detection_model.build_model((416, 416, 3))
+    # # detection_model.summary()
+    # detection_model.layers[0].trainable = False
+    # # for layer in detection_model.layers:
+    # #     print(layer.name, layer.trainable)
+    # # exit()
 
-    # optimizer = tf.keras.optimizers.SGD(learning_rate=0.0001, momentum=0.8)
+    # # optimizer = tf.keras.optimizers.SGD(learning_rate=0.0001, momentum=0.8)
+    # optimizer = tf.keras.optimizers.Adam()
     # saver = tf.train.Checkpoint(optimizer=optimizer, model=detection_model)
 
     # def train_step(inputs):
@@ -202,6 +214,7 @@ if __name__ == "__main__":
     #     for image, label in train_dataset:
     #         if batch_counter == BATCH_SIZE:
     #             b_images, b_labels = dataloader.combine(batch_images, batch_labels)
+    #             print(b_images[0, :2, :2, :])
     #             loss = train_step(
     #                 (
     #                     b_images,

@@ -20,6 +20,7 @@ from tensorflow.keras.layers import (
     Input,
     AveragePooling2D,
     UpSampling2D,
+    BatchNormalization,
 )
 from tensorflow.keras import Model
 
@@ -62,8 +63,8 @@ class Detector(keras.Model):
             # print(layer_tuple.index, out.shape)
         return [self.layer_outputs[index] for index in self.anchor_indices]
 
-    def build_model(self, input_shape):
-        model_input = Input(shape=input_shape)
+    def build_model(self, input_shape, batch_size=None):
+        model_input = Input(shape=input_shape, batch_size=batch_size)
 
         # assumption is the input_shape is of style
         # [N, H, W, C] because Tensorflow “¯\_(ツ)_/¯“

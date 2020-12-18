@@ -7,8 +7,11 @@ Set detection losses for outputs
 2. Objectness loss is a little different. Objectness score is set to 1, if any prior box overlaps the
     groudtruth by greater than any other prior box. The prediction is ignored if it does not but the iou
     threshold is greater than 0.5.
+3. With PyTorch method of calculating objectness loss, should noobj loss always be added? It maskes
+    sense because those will certainly not be objects.
 """
 
+import numpy as np
 import tensorflow as tf
 from utils.box_utils import box_iou_tf
 from utils.utils import INT, FLOAT, BOOL
@@ -129,6 +132,7 @@ def get_loss_per_grid_detection(
     num_classes,
 ):
     # print("Detection output: {}".format(detection_output.shape))
+    # print(detection_output[0, :2, :2, :])
     losses = {
         "regression_loss": 0.0,
         "objectness_loss": 0.0,
@@ -221,7 +225,7 @@ def get_loss_per_grid_detection(
     if tf.reduce_any(iou_anchor_gt > 0.5):
         valid_matches = True
     else:
-        valid_matches = False
+        valid_matches = True
 
     # print("valid_matches: {}".format(valid_matches))
     # print("iou_anchor_gt")
@@ -240,6 +244,10 @@ def get_loss_per_grid_detection(
         [ground_truth_batch_indices, max_iou_anchor_indices, priors_y, priors_x],
         axis=-1,
     )
+    # print("prior_indices")
+    # print(prior_indices)
+    # print("")
+
     anchors_broadcasted = tf.broadcast_to(
         anchors_tensor, (num_gt,) + anchors_tensor.shape
     )
@@ -268,12 +276,38 @@ def get_loss_per_grid_detection(
 
     # at this step, you can get localization loss from priors_from_preds
     # and converted_gt
-    if valid_matches:
-        localization_loss = get_localization_loss(
-            loss_map, converted_gt, priors_from_preds
-        )
-    else:
-        localization_loss = tf.constant(0.0)
+    # if valid_matches:
+    #     localization_loss = get_localization_loss(
+    #         loss_map, converted_gt, priors_from_preds
+    #     )
+    # else:
+    #     localization_loss = tf.constant(0.0)
+    localization_loss = get_localization_loss(loss_map, converted_gt, priors_from_preds)
+    # with open(
+    #     "/home/karan/Checkpoint/DEBUG/tensor_converted_gt{}.npy".format(grid_x), "wb"
+    # ) as f:
+    #     np.save(f, converted_gt)
+    # print("localization loss: {}".format(localization_loss))
+    # print(
+    #     "xloss: {}".format(
+    #         tf.keras.losses.MSE(converted_gt[:, 0], priors_from_preds[:, 0])
+    #     )
+    # )
+    # print(
+    #     "yloss: {}".format(
+    #         tf.keras.losses.MSE(converted_gt[:, 1], priors_from_preds[:, 1])
+    #     )
+    # )
+    # print(
+    #     "wloss: {}".format(
+    #         tf.keras.losses.MSE(converted_gt[:, 2], priors_from_preds[:, 2])
+    #     )
+    # )
+    # print(
+    #     "hloss: {}".format(
+    #         tf.keras.losses.MSE(converted_gt[:, 3], priors_from_preds[:, 3])
+    #     )
+    # )
 
     # get no_obj loss, obj loss and classification loss.
     # noobj loss
@@ -283,40 +317,43 @@ def get_loss_per_grid_detection(
     predicted_bboxes_flattened = tf.reshape(
         predicted_bboxes, [-1, 4]
     )  # flatten all bounding boxes to a Tensor of rank 2
-    iou_predictions_gt = box_iou_tf(ground_truth_bbox, predicted_bboxes_flattened)
-    print("")
+    # print("predicted bouinding boxes")
+    # print(tf.gather_nd(predicted_bboxes, prior_indices))
 
-    # get noobj_masks
-    noobj_mask_candidates = tf.where(
-        tf.math.reduce_max(iou_predictions_gt, axis=-1) > 0.5,  # ignore_threshold
-        False,
-        True,
-    )
-    noobj_mask_candidates_positives = tf.where(
-        tf.math.reduce_max(iou_predictions_gt, axis=-1) > 0.5,  # ignore_threshold
-        True,
-        False,
-    )
-    noobj_mask = tf.cast(noobj_mask_candidates, dtype=INT)
-    noobj_positives_mask = tf.cast(noobj_mask_candidates_positives, dtype=INT)
-    # noobj_gt = tf.boolean_mask(tf.cast(noobj_mask, dtype=FLOAT),
-    #                           noobj_mask)
-    noobj_gt = tf.boolean_mask(
-        tf.cast(
-            tf.where(tf.math.reduce_max(iou_predictions_gt, axis=-1) > 0.5, 1.0, 0.0),
-            dtype=FLOAT,
-        ),
-        noobj_mask,
-    )
-    noobj_positives_gt = tf.boolean_mask(
-        tf.cast(noobj_positives_mask, FLOAT), noobj_positives_mask
-    )
-    noobj_predictions = tf.boolean_mask(
-        tf.reshape(predicted_objectness, [-1]), noobj_mask
-    )
-    noobj_positives_predictions = tf.boolean_mask(
-        tf.reshape(predicted_objectness, [-1]), noobj_positives_mask
-    )
+    # ---------------- PRIMITIVE DARKNET IMPLEMENTATION ---------------------------
+    # iou_predictions_gt = box_iou_tf(ground_truth_bbox, predicted_bboxes_flattened)
+
+    # # get noobj_masks
+    # noobj_mask_candidates = tf.where(
+    #     tf.math.reduce_max(iou_predictions_gt, axis=-1) > 0.5,  # ignore_threshold
+    #     False,
+    #     True,
+    # )
+    # noobj_mask_candidates_positives = tf.where(
+    #     tf.math.reduce_max(iou_predictions_gt, axis=-1) > 0.5,  # ignore_threshold
+    #     True,
+    #     False,
+    # )
+    # noobj_mask = tf.cast(noobj_mask_candidates, dtype=INT)
+    # noobj_positives_mask = tf.cast(noobj_mask_candidates_positives, dtype=INT)
+    # # noobj_gt = tf.boolean_mask(tf.cast(noobj_mask, dtype=FLOAT),
+    # #                           noobj_mask)
+    # noobj_gt = tf.boolean_mask(
+    #     tf.cast(
+    #         tf.where(tf.math.reduce_max(iou_predictions_gt, axis=-1) > 0.5, 1.0, 0.0),
+    #         dtype=FLOAT,
+    #     ),
+    #     noobj_mask,
+    # )
+    # noobj_positives_gt = tf.boolean_mask(
+    #     tf.cast(noobj_positives_mask, FLOAT), noobj_positives_mask
+    # )
+    # noobj_predictions = tf.boolean_mask(
+    #     tf.reshape(predicted_objectness, [-1]), noobj_mask
+    # )
+    # noobj_positives_predictions = tf.boolean_mask(
+    #     tf.reshape(predicted_objectness, [-1]), noobj_positives_mask
+    # )
     # print("noobj_gt")
     # print(noobj_gt)
     # print("")
@@ -334,29 +371,118 @@ def get_loss_per_grid_detection(
     # print("")
 
     # get BCE Loss for no objectness
-    noobj_loss = get_noobj_loss(loss_map, noobj_gt, noobj_predictions)
-    if tf.reduce_any(iou_predictions_gt > 0.5):
-        noobj_loss_pos = get_noobj_loss(
-            loss_map, noobj_positives_gt, noobj_positives_predictions
-        )
-        noobj_loss = noobj_loss + noobj_loss_pos
+    # noobj_loss = get_noobj_loss(loss_map, noobj_gt, noobj_predictions)
+    # if tf.reduce_any(iou_predictions_gt > 0.5):
+    #     noobj_loss_pos = get_noobj_loss(
+    #         loss_map, noobj_positives_gt, noobj_positives_predictions
+    #     )
+    #     noobj_loss = noobj_loss + noobj_loss_pos
 
-    # Objectness
-    objectness_predictions = tf.gather_nd(predicted_objectness, prior_indices)
-    objectness_gt = tf.ones_like(objectness_predictions)
-    # print("objectness_predictions")
-    # print(objectness_predictions)
+    # # Objectness
+    # objectness_predictions = tf.gather_nd(predicted_objectness, prior_indices)
+    # objectness_gt = tf.ones_like(objectness_predictions)
+    # # print("objectness_predictions")
+    # # print(objectness_predictions)
+    # # print("")
+
+    # # print("objectness_gt")
+    # # print(objectness_gt)
+    # # print("")
+
+    # # get BCE Loss for objectness
+    # if valid_matches:
+    #     obj_loss = get_obj_loss(loss_map, objectness_gt, objectness_predictions)
+    # else:
+    #     obj_loss = tf.constant(0.0)
+
+    # ---------------- PYTORCH STYLE IMPLEMENTATION ---------------------------
+    candidate_ignore_threshold = tf.where(iou_anchor_gt > 0.5)
+    candidate_it_gt_indices = candidate_ignore_threshold[:, 0]
+    candidate_it_anchor_indices = candidate_ignore_threshold[:, 1]
+
+    # create positive objectness mask
+    batch_index_for_candidates = tf.cast(
+        tf.gather_nd(
+            ground_truth_batch_indices, tf.expand_dims(candidate_it_gt_indices, axis=-1)
+        ),
+        dtype=INT,
+    )
+    anchor_index_for_candidates = tf.cast(candidate_it_anchor_indices, dtype=INT)
+    y_index_for_candidates = tf.cast(
+        tf.gather_nd(priors_y, tf.expand_dims(candidate_it_gt_indices, axis=-1)),
+        dtype=INT,
+    )
+    x_index_for_candidates = tf.cast(
+        tf.gather_nd(priors_x, tf.expand_dims(candidate_it_gt_indices, axis=-1)),
+        dtype=INT,
+    )
+    positive_objects_indices = tf.stack(
+        [
+            batch_index_for_candidates,
+            anchor_index_for_candidates,
+            y_index_for_candidates,
+            x_index_for_candidates,
+        ],
+        axis=-1,
+    )
+    positive_objects_indices = tf.concat(
+        [prior_indices, positive_objects_indices], axis=0
+    )
+
+    # create objectness mask
+    objectness_gt_values = tf.cast(
+        tf.ones_like(positive_objects_indices[:, 0]), dtype=INT
+    )
+    objectness_mask = tf.scatter_nd(
+        positive_objects_indices,
+        objectness_gt_values,
+        [batch_size, num_anchors, grid_y, grid_x],
+    )
+    objectness_mask = tf.where(objectness_mask != 0, 1.0, 0.0)
+    objectness_mask = tf.cast(objectness_mask, INT)
+    # with open(
+    #     "/home/karan/Checkpoint/DEBUG/tf_obj_mask{}.npy".format(grid_x), "wb"
+    # ) as f:
+    #     np.save(f, objectness_mask)
+    # print("objectness_mask")
+    # print(tf.where(objectness_mask == 1))
+    noobjectness_mask = tf.cast(
+        tf.logical_not(tf.cast(objectness_mask, dtype=tf.bool)), INT
+    )
+    # with open(
+    #     "/home/karan/Checkpoint/DEBUG/tf_noobj_mask{}.npy".format(grid_x), "wb"
+    # ) as f:
+    #     np.save(f, noobjectness_mask)
+    # print("noobj shape: {}".format(noobjectness_mask.shape))
+    objectness_gt_everything = tf.cast(objectness_mask, dtype=FLOAT)
+    # get objectness loss
+    objects_positives_gt = tf.boolean_mask(objectness_gt_everything, objectness_mask)
+    # print("object_positives_gt")
+    # print(objects_positives_gt)
     # print("")
-
-    # print("objectness_gt")
-    # print(objectness_gt)
+    objects_positives_preds = tf.boolean_mask(predicted_objectness, objectness_mask)
+    # print("objects_positives_preds")
+    # print(objects_positives_preds)
     # print("")
+    objects_negative_gt = tf.boolean_mask(objectness_gt_everything, noobjectness_mask)
+    # print("objects_negative_gt")
+    # print(objects_negative_gt)
+    # print("")
+    objects_negative_preds = tf.boolean_mask(predicted_objectness, noobjectness_mask)
+    # print("objects_negative_preds")
+    # print(objects_negative_preds)
+    # print("")
+    obj_loss = get_noobj_loss(loss_map, objects_positives_gt, objects_positives_preds)
+    noobj_loss = get_obj_loss(loss_map, objects_negative_gt, objects_negative_preds)
 
-    # get BCE Loss for objectness
-    if valid_matches:
-        obj_loss = get_obj_loss(loss_map, objectness_gt, objectness_predictions)
-    else:
-        obj_loss = tf.constant(0.0)
+    # if valid_matches:
+    #     obj_loss = get_noobj_loss(
+    #         loss_map, objects_positives_gt, objects_positives_preds
+    #     )
+    #     noobj_loss = get_obj_loss(loss_map, objects_negative_gt, objects_negative_preds)
+    # else:
+    #     obj_loss = tf.constant(0.0)
+    #     noobj_loss = tf.constant(0.0)
 
     # bce loss for classes
     class_predictions = tf.gather_nd(predicted_classes, prior_indices)
@@ -370,15 +496,15 @@ def get_loss_per_grid_detection(
     # print("")
 
     # get bce loss for classes
-    if valid_matches:
-        class_loss = get_class_loss(loss_map, class_gt, class_predictions)
-    else:
-        class_loss = tf.constant(0.0)
+    class_loss = get_class_loss(loss_map, class_gt, class_predictions)
+    #     class_loss = get_class_loss(loss_map, class_gt, class_predictions)
+    # else:
+    #     class_loss = tf.constant(0.0)
 
     # final losses per detection grid
     losses["regression_loss"] = localization_loss * 1.0  # scale
     losses["objectness_loss"] = obj_loss * 1.0  # scale
-    losses["noobjectness_loss"] = noobj_loss * 1.0  # scale
+    losses["noobjectness_loss"] = noobj_loss * 100.0  # scale
     losses["classification_loss"] = class_loss * 1.0  # scale
     losses["total_loss"] = (
         losses["regression_loss"]
@@ -449,9 +575,10 @@ def detection_loss(
     #    print("min :{}".format(min(detection_output.numpy().flatten())))
     #    print("max :{}".format(max(detection_output.numpy().flatten())))
 
-    # print("ground_truth")
+    # print("ground truth")
     # print(ground_truth)
     # print("")
+
     for detection_index, detection_output in enumerate(detection_outputs):
         current_detection_loss = get_loss_per_grid_detection(
             detection_output,
@@ -467,13 +594,13 @@ def detection_loss(
 
     total_loss = 0.0
     for detection_loss in detection_losses:
-        print(detection_loss["regression_loss"])
-        print(detection_loss["objectness_loss"])
-        print(detection_loss["noobjectness_loss"])
-        print(detection_loss["classification_loss"])
-        print(detection_loss["total_loss"])
-        print(detection_loss["valid"])
-        print("")
+        # print(detection_loss["regression_loss"])
+        # print(detection_loss["objectness_loss"])
+        # print(detection_loss["noobjectness_loss"])
+        # print(detection_loss["classification_loss"])
+        # print(detection_loss["total_loss"])
+        # print(detection_loss["valid"])
+        # print("")
         total_loss += detection_loss["total_loss"]
 
     # print("total loss before sending: {}".format(total_loss))
