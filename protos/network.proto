@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+package yolov3;
+
+import "protos/convolution.proto";
+import "protos/residual.proto";
+import "protos/route.proto";
+import "protos/upsample.proto";
+import "protos/yolo.proto";
+
+message Network {
+    repeated Convolution convolutions = 1;
+    repeated ResidualBlock residuals = 2;
+    repeated Route routes = 3;
+    repeated UpSample upsampling = 4;
+    repeated Yolo yolos = 5;
+};
+
+message NetworkDefinition {
+    required Network network_def = 1;
+}

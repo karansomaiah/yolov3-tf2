@@ -1,0 +1,19 @@
+syntax = "proto2";
+
+package yolov3;
+
+import "protos/convolution.proto";
+
+message ResidualBlock {
+    // layer properties
+    repeated Convolution bare_convs = 1;
+    optional int32 multiplier = 2 [default = 1];
+
+    // layer attributes
+    required int32 id = 3;
+    optional int32 input_id = 4 [default = -1];
+}
+
+message ResidualBlockLayer {
+    required ResidualBlock residual_block = 1;
+}

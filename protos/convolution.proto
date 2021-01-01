@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package yolov3;
+
+message Convolution {
+    // basic convolution properties
+    required int32 num_filters = 1;
+    required int32 kernel_h = 2;
+    required int32 kernel_w = 3;
+    required int32 stride_h = 4;
+    required int32 stride_w = 5;
+
+    // enum for activations
+    enum Activation {
+        NONE = 0;
+        RELU = 1;
+        SIGMOID = 2;
+        HARD_SIGMOID = 3;
+        SWISH = 4;
+        SOFTMAX = 5;
+        SOFTPLUS = 6;
+        SOFTSIGN = 7;
+        TANH = 8;
+        SELU = 9;
+        ELU = 10;
+        GELU = 11;
+        EXPONENT = 12;
+        LEAKY = 13;
+    }
+
+    optional Activation activation_function = 6 [default = NONE];
+    required bool batch_normalization = 7;
+
+    // layer attributes
+    required int32 id = 8;
+    optional int32 input_id = 9 [default = -1];
+};
+
+message ConvolutionLayer {
+    required Convolution conv_layer = 1;
+};

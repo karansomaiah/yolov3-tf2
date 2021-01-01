@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package yolov3;
+
+message Route {
+    // layer args
+    repeated int32 indices = 1;
+
+    // layer attributes
+    required int32 id = 2;
+    optional int32 input_id = 3 [default = -1];
+};
+
+message RouteLayer {
+    required Route route_layer = 1;
+}

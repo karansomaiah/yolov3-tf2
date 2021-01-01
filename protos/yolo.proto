@@ -1,0 +1,22 @@
+syntax = "proto2";
+
+package yolov3;
+
+message Yolo {
+    // layer args
+    repeated int32 anchors = 1;
+    required int32 num_classes = 2;
+    required int32 num = 3;
+    required float jitter = 4;
+    required float ignore_threshold = 5;
+    required float truth_threshold = 6;
+    required int32 random = 7;
+
+    // layer attributes
+    required int32 id = 8;
+    optional int32 input_id = 9 [default = -1];
+};
+
+message YoloLayer {
+    required Yolo yolo_layer = 1;
+}

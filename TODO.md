@@ -12,4 +12,28 @@
  - [ ] Modularize backbones, anchors, loss layer, etc.
  - [ ] Separation for train, eval, test and predict.
  - [ ] Handle CPU/GPU/multi-GPU training
+ - [ ] Data: Add Augmentations.
+ - [ ] Modularize: Create a newly inherited Conv2D layer for implementation
+   purposes. With this layer you can sequentially implement it as Conv2d,
+   followed by a BN/Activation as it pleases and also leaky relu is not an
+   option and forces this kind of implementation. Some references"
+    - [BatchNorm after RELU](https://github.com/gcr/torch-residual-networks/issues/5)
+    - [Where do I call BatchNorm in Keras - StackOverflow](https://stackoverflow.com/questions/34716454/where-do-i-call-the-batchnormalization-function-in-keras)
+    - [FCHOLLET enlightening us on BN application. Basically it's a little irrelevant to him](https://github.com/keras-team/keras/issues/1802)
+ - [ ] TensorRT: An optimization idea would be folding batch norm params into
+   the Conv2D to increase FPS. FPS LOVER ALL THE WAY!
 
+ ## PROGRESS
+ - Keeping Protobufs aside. But, currently what can be done is a label map like implementation, 
+   with each layer type (Convolution, Route, etc.) associated with an id and an input. 
+   So that when we write a .pbtxt for defining a network, we can define a layer, it's properties (args), 
+   associate it with an id, an input (the id of a layer who's outputs are going in as inputs) to the
+   current layer.
+ - Fixing Residual Blocks for Now.
+ - Using batch normalization after convolution blocks makes sense. Because,
+   assuming images are provided as normalized as inputs to a network,
+   (considering input to be a layer) it means each layer's output is
+   normalized. And going by that, batch norm is applied at the output of each
+   layer.
+ - Inherit the Conv2D layer from keras and create a new one called
+   DarknetConv2D because of the use of LeakyRelu and providing flexibility
