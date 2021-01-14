@@ -2,7 +2,8 @@ import os
 import sys
 
 from utils import clean_imports
-clean_imports.clean() # clean ROS OpenCV import and disable tensorflow logs
+
+clean_imports.clean()  # clean ROS OpenCV import and disable tensorflow logs
 
 
 CHECK_OPENCV2 = "/opt/ros/kinetic/lib/python2.7/dist-packages"

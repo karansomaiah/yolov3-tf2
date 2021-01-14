@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yolov3',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=_b('\n\x18protos/convolution.proto\x12\x06yolov3\"\xa2\x03\n\x0b\x43onvolution\x12\x13\n\x0bnum_filters\x18\x01 \x02(\x05\x12\x10\n\x08kernel_h\x18\x02 \x02(\x05\x12\x10\n\x08kernel_w\x18\x03 \x02(\x05\x12\x10\n\x08stride_h\x18\x04 \x02(\x05\x12\x10\n\x08stride_w\x18\x05 \x02(\x05\x12\x41\n\x13\x61\x63tivation_function\x18\x06 \x01(\x0e\x32\x1e.yolov3.Convolution.Activation:\x04NONE\x12\x1b\n\x13\x62\x61tch_normalization\x18\x07 \x02(\x08\x12\n\n\x02id\x18\x08 \x02(\x05\x12\x14\n\x08input_id\x18\t \x01(\x05:\x02-1\"\xb3\x01\n\nActivation\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04RELU\x10\x01\x12\x0b\n\x07SIGMOID\x10\x02\x12\x10\n\x0cHARD_SIGMOID\x10\x03\x12\t\n\x05SWISH\x10\x04\x12\x0b\n\x07SOFTMAX\x10\x05\x12\x0c\n\x08SOFTPLUS\x10\x06\x12\x0c\n\x08SOFTSIGN\x10\x07\x12\x08\n\x04TANH\x10\x08\x12\x08\n\x04SELU\x10\t\x12\x07\n\x03\x45LU\x10\n\x12\x08\n\x04GELU\x10\x0b\x12\x0c\n\x08\x45XPONENT\x10\x0c\x12\t\n\x05LEAKY\x10\r\";\n\x10\x43onvolutionLayer\x12\'\n\nconv_layer\x18\x01 \x02(\x0b\x32\x13.yolov3.Convolution')
+  serialized_pb=_b('\n\x18protos/convolution.proto\x12\x06yolov3\"\x98\x03\n\x0b\x43onvolution\x12\x13\n\x0bnum_filters\x18\x01 \x02(\x05\x12\x10\n\x08kernel_h\x18\x02 \x02(\x05\x12\x10\n\x08kernel_w\x18\x03 \x02(\x05\x12\x10\n\x08stride_h\x18\x04 \x02(\x05\x12\x10\n\x08stride_w\x18\x05 \x02(\x05\x12\x41\n\x13\x61\x63tivation_function\x18\x06 \x01(\x0e\x32\x1e.yolov3.Convolution.Activation:\x04NONE\x12\x1b\n\x13\x62\x61tch_normalization\x18\x07 \x02(\x08\x12\n\n\x02id\x18\x08 \x02(\x05\x12\x14\n\x08input_id\x18\t \x01(\x05:\x02-1\"\xa9\x01\n\nActivation\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04RELU\x10\x01\x12\x0b\n\x07SIGMOID\x10\x02\x12\x10\n\x0cHARD_SIGMOID\x10\x03\x12\t\n\x05SWISH\x10\x04\x12\x0b\n\x07SOFTMAX\x10\x05\x12\x0c\n\x08SOFTPLUS\x10\x06\x12\x0c\n\x08SOFTSIGN\x10\x07\x12\x08\n\x04TANH\x10\x08\x12\x08\n\x04SELU\x10\t\x12\x07\n\x03\x45LU\x10\n\x12\x0c\n\x08\x45XPONENT\x10\x0b\x12\t\n\x05LEAKY\x10\x0c\";\n\x10\x43onvolutionLayer\x12\'\n\nconv_layer\x18\x01 \x02(\x0b\x32\x13.yolov3.Convolution')
 )
 
 
@@ -75,22 +75,18 @@ _CONVOLUTION_ACTIVATION = _descriptor.EnumDescriptor(
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='GELU', index=11, number=11,
+      name='EXPONENT', index=11, number=11,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='EXPONENT', index=12, number=12,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='LEAKY', index=13, number=13,
+      name='LEAKY', index=12, number=12,
       serialized_options=None,
       type=None),
   ],
   containing_type=None,
   serialized_options=None,
   serialized_start=276,
-  serialized_end=455,
+  serialized_end=445,
 )
 _sym_db.RegisterEnumDescriptor(_CONVOLUTION_ACTIVATION)
 
@@ -179,7 +175,7 @@ _CONVOLUTION = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=37,
-  serialized_end=455,
+  serialized_end=445,
 )
 
 
@@ -209,8 +205,8 @@ _CONVOLUTIONLAYER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=457,
-  serialized_end=516,
+  serialized_start=447,
+  serialized_end=506,
 )
 
 _CONVOLUTION.fields_by_name['activation_function'].enum_type = _CONVOLUTION_ACTIVATION

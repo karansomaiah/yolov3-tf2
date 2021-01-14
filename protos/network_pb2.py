@@ -17,6 +17,10 @@ from protos import residual_pb2 as protos_dot_residual__pb2
 from protos import route_pb2 as protos_dot_route__pb2
 from protos import upsample_pb2 as protos_dot_upsample__pb2
 from protos import yolo_pb2 as protos_dot_yolo__pb2
+from protos import eval_pb2 as protos_dot_eval__pb2
+from protos import train_pb2 as protos_dot_train__pb2
+from protos import modelspecs_pb2 as protos_dot_modelspecs__pb2
+from protos import classmap_pb2 as protos_dot_classmap__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -24,9 +28,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yolov3',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=_b('\n\x14protos/network.proto\x12\x06yolov3\x1a\x18protos/convolution.proto\x1a\x15protos/residual.proto\x1a\x12protos/route.proto\x1a\x15protos/upsample.proto\x1a\x11protos/yolo.proto\"\xc0\x01\n\x07Network\x12)\n\x0c\x63onvolutions\x18\x01 \x03(\x0b\x32\x13.yolov3.Convolution\x12(\n\tresiduals\x18\x02 \x03(\x0b\x32\x15.yolov3.ResidualBlock\x12\x1d\n\x06routes\x18\x03 \x03(\x0b\x32\r.yolov3.Route\x12$\n\nupsampling\x18\x04 \x03(\x0b\x32\x10.yolov3.UpSample\x12\x1b\n\x05yolos\x18\x05 \x03(\x0b\x32\x0c.yolov3.Yolo\"9\n\x11NetworkDefinition\x12$\n\x0bnetwork_def\x18\x01 \x02(\x0b\x32\x0f.yolov3.Network')
+  serialized_pb=_b('\n\x14protos/network.proto\x12\x06yolov3\x1a\x18protos/convolution.proto\x1a\x15protos/residual.proto\x1a\x12protos/route.proto\x1a\x15protos/upsample.proto\x1a\x11protos/yolo.proto\x1a\x11protos/eval.proto\x1a\x12protos/train.proto\x1a\x17protos/modelspecs.proto\x1a\x15protos/classmap.proto\"\xc0\x01\n\x07Network\x12)\n\x0c\x63onvolutions\x18\x01 \x03(\x0b\x32\x13.yolov3.Convolution\x12(\n\tresiduals\x18\x02 \x03(\x0b\x32\x15.yolov3.ResidualBlock\x12\x1d\n\x06routes\x18\x03 \x03(\x0b\x32\r.yolov3.Route\x12$\n\nupsampling\x18\x04 \x03(\x0b\x32\x10.yolov3.UpSample\x12\x1b\n\x05yolos\x18\x05 \x03(\x0b\x32\x0c.yolov3.Yolo\"\xcf\x01\n\x11NetworkDefinition\x12$\n\x0bnetwork_def\x18\x01 \x02(\x0b\x32\x0f.yolov3.Network\x12#\n\x0ctrain_config\x18\x02 \x02(\x0b\x32\r.yolov3.Train\x12!\n\x0b\x65val_config\x18\x03 \x02(\x0b\x32\x0c.yolov3.Eval\x12\'\n\x0bmodel_specs\x18\x04 \x02(\x0b\x32\x12.yolov3.ModelSpecs\x12#\n\tclass_def\x18\x05 \x02(\x0b\x32\x10.yolov3.ClassMap')
   ,
-  dependencies=[protos_dot_convolution__pb2.DESCRIPTOR,protos_dot_residual__pb2.DESCRIPTOR,protos_dot_route__pb2.DESCRIPTOR,protos_dot_upsample__pb2.DESCRIPTOR,protos_dot_yolo__pb2.DESCRIPTOR,])
+  dependencies=[protos_dot_convolution__pb2.DESCRIPTOR,protos_dot_residual__pb2.DESCRIPTOR,protos_dot_route__pb2.DESCRIPTOR,protos_dot_upsample__pb2.DESCRIPTOR,protos_dot_yolo__pb2.DESCRIPTOR,protos_dot_eval__pb2.DESCRIPTOR,protos_dot_train__pb2.DESCRIPTOR,protos_dot_modelspecs__pb2.DESCRIPTOR,protos_dot_classmap__pb2.DESCRIPTOR,])
 
 
 
@@ -85,8 +89,8 @@ _NETWORK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=144,
-  serialized_end=336,
+  serialized_start=231,
+  serialized_end=423,
 )
 
 
@@ -104,6 +108,34 @@ _NETWORKDEFINITION = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='train_config', full_name='yolov3.NetworkDefinition.train_config', index=1,
+      number=2, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='eval_config', full_name='yolov3.NetworkDefinition.eval_config', index=2,
+      number=3, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='model_specs', full_name='yolov3.NetworkDefinition.model_specs', index=3,
+      number=4, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='class_def', full_name='yolov3.NetworkDefinition.class_def', index=4,
+      number=5, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -116,8 +148,8 @@ _NETWORKDEFINITION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=338,
-  serialized_end=395,
+  serialized_start=426,
+  serialized_end=633,
 )
 
 _NETWORK.fields_by_name['convolutions'].message_type = protos_dot_convolution__pb2._CONVOLUTION
@@ -126,6 +158,10 @@ _NETWORK.fields_by_name['routes'].message_type = protos_dot_route__pb2._ROUTE
 _NETWORK.fields_by_name['upsampling'].message_type = protos_dot_upsample__pb2._UPSAMPLE
 _NETWORK.fields_by_name['yolos'].message_type = protos_dot_yolo__pb2._YOLO
 _NETWORKDEFINITION.fields_by_name['network_def'].message_type = _NETWORK
+_NETWORKDEFINITION.fields_by_name['train_config'].message_type = protos_dot_train__pb2._TRAIN
+_NETWORKDEFINITION.fields_by_name['eval_config'].message_type = protos_dot_eval__pb2._EVAL
+_NETWORKDEFINITION.fields_by_name['model_specs'].message_type = protos_dot_modelspecs__pb2._MODELSPECS
+_NETWORKDEFINITION.fields_by_name['class_def'].message_type = protos_dot_classmap__pb2._CLASSMAP
 DESCRIPTOR.message_types_by_name['Network'] = _NETWORK
 DESCRIPTOR.message_types_by_name['NetworkDefinition'] = _NETWORKDEFINITION
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)

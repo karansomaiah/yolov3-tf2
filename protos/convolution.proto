@@ -23,9 +23,8 @@ message Convolution {
         TANH = 8;
         SELU = 9;
         ELU = 10;
-        GELU = 11;
-        EXPONENT = 12;
-        LEAKY = 13;
+        EXPONENT = 11;
+        LEAKY = 12;
     }
 
     optional Activation activation_function = 6 [default = NONE];

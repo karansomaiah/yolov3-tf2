@@ -22,6 +22,7 @@
     - [FCHOLLET enlightening us on BN application. Basically it's a little irrelevant to him](https://github.com/keras-team/keras/issues/1802)
  - [ ] TensorRT: An optimization idea would be folding batch norm params into
    the Conv2D to increase FPS. FPS LOVER ALL THE WAY!
+ - [ ] Prediction/Evaluation: Add NMS Implementation.
 
  ## PROGRESS
  - Keeping Protobufs aside. But, currently what can be done is a label map like implementation, 

@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package yolov3;
+
+message Eval {
+    required string dataset = 1;
+    required int32 batch_size = 2;
+    optional int32 num_examples_visualize = 3 [default = 10];
+}
+
+message EvalConfig {
+    required Eval eval_config = 1;
+}

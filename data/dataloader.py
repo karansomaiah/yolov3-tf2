@@ -5,15 +5,18 @@ Dataloader functionality for datasets
 
 import os
 import json
+import random
 import numpy as np
 import tensorflow as tf
 
 import PIL
 from PIL import Image
 
-# import data.tfrecord_creator as tfrecord_creator
 
-class_map = {"Dog": 0}
+def generate_class_map(config):
+    return {
+        class_proto.class_name: class_proto.clas_id for class_proto in config.class_map
+    }
 
 
 def read_label_json(filepath):
@@ -25,31 +28,61 @@ def read_label_json(filepath):
     return labelled_data
 
 
-def annotation_generator(annotations, image_width, image_height):
-    for annotation in annotations:
-        image = Image.open(annotation["image_path"])  # read image
-        image = image.resize(
-            size=(image_width, image_height), resample=PIL.Image.LANCZOS
-        )
-        bboxes = np.array(
-            [
+def annotation_generator(
+    annotations, class_map, image_width, image_height, batch_size, shuffle=False
+):
+    # apply shuffle to the dataset when asked for
+    random.shuffle(annotations)
+
+    # generate batch indices given a batch_size
+    annotation_length = len(annotations)
+    for annotation_ndx in range(0, annotation_length, batch_size):
+        batched_images_as_list = []
+        batched_labels_as_list = []
+        for batch_index, batch_num in enumerate(
+            range(annotation_ndx, min(annotation_ndx + batch_size, annotation_length))
+        ):
+            image = Image.open(annotations[batch_num]["image_path"])
+            image = image.resize(
+                size=(image_width, image_height), resample=PIL.Image.LANCZOS
+            )
+            bboxes = np.array(
                 [
-                    bbox[0] / image_width,
-                    bbox[1] / image_height,
-                    bbox[2] / image_width,
-                    bbox[3] / image_height,
+                    [
+                        bbox[0] / image_width,
+                        bbox[1] / image_height,
+                        bbox[2] / image_width,
+                        bbox[3] / image_height,
+                    ]
+                    for bbox in annotations[batch_num]["bboxes"]
                 ]
-                # [bbox[0]/640, bbox[1]/640, bbox[2]/640, bbox[3]/640]
-                for bbox in annotation["bboxes"]
-            ]
-        )
-        classes = np.array(
-            [[class_map[class_label]] for class_label in annotation["classes"]]
-        )
-        label = np.concatenate([bboxes, classes], axis=-1)
-        yield image, label
+            )
+            classes = np.array(
+                [
+                    [class_map[class_label]]
+                    for class_label in annotations[batch_num]["classes"]
+                ]
+            )
+            label = np.concatenate([bboxes, classes], axis=-1)
+            batched_labels_as_list.append(
+                np.concatenate(
+                    [
+                        np.expand_dims(np.ones(label.shape[0]) * batch_index, axis=-1),
+                        label,
+                    ],
+                    axis=-1,
+                )
+            )
+            batched_images_as_list.append(image)
+
+        # combine them
+        batch_images = np.stack(batched_images_as_list, axis=0)
+        batch_labels = np.concatenate(batched_labels_as_list, axis=0)
+        yield batch_images, batch_labels
 
 
+"""
+DEPRACATED
 def combine(images, labels):
     images = tf.stack(images, axis=0) / 255.0
     labels_list_with_batch = []
@@ -61,67 +94,16 @@ def combine(images, labels):
             )
         )
     return images, tf.concat(labels_list_with_batch, axis=0)
+"""
 
-
+""" 
+@DEPRACATED
 def tf_dataloader(config_filepath):
     # Get Values from the config
     input_height = config_filepath["INPUT_H"]
     input_width = config_filepath["INPUT_W"]
     annotation_filename = config_filepath["annotation_path"]
     annotations = read_label_json(annotation_filename)
-    # create_tfrecords = bool(int(config_filepath["create_tfrecords"]))
-
-    #    ---------------------------------------------------------------------------
-    #    # create tfrecords
-    #    if create_tfrecords:
-    #        annotations = read_label_json(annotation_filename)
-    #        tfrecord_creator.write_tfrecords("/home/knapanda/",
-    #            annotations, input_height, input_width
-    #        )
-    #
-    #    tfrecord_features = {
-    #        'image': tf.io.FixedLenFeature([], tf.string, default_value=''),
-    #        'x': tf.io.VarLenFeature(tf.float32),
-    #        'y': tf.io.VarLenFeature(tf.float32),
-    #        'w': tf.io.VarLenFeature(tf.float32),
-    #        'h': tf.io.VarLenFeature(tf.float32),
-    #        'label': tf.io.VarLenFeature(tf.int64),
-    #    }
-    #
-    #    def _convert(parsed_example):
-    #        return{
-    #            'image': tf.reshape(
-    #                tf.io.decode_raw(parsed_example['image'], tf.uint8),
-    #                [416, 416, 3]),
-    #            'x': tf.sparse.to_dense(parsed_example['x']),
-    #            'y': tf.sparse.to_dense(parsed_example['y']),
-    #            'w': tf.sparse.to_dense(parsed_example['w']),
-    #            'h': tf.sparse.to_dense(parsed_example['h'])
-    #        }
-    #
-    #    def _parse_example(example):
-    #        return _convert(tf.io.parse_single_example(example, tfrecord_features))
-    #    ---------------------------------------------------------------------------
-
-    #    ---------------------------------------------------------------------------
-    #    # processed labels
-    #    train_labels = process_labels(train_labels)
-    #    val_labels = process_labels(val_labels)
-    #
-    #    tf_train_dataset = tf.data.Dataset.from_tensor_slices((train_images, train_labels))
-    #    tf_train_dataset = tf_train_dataset.map(reader)
-    #    tf_train_dataset = tf_train_dataset.repeat(90)
-    #    tf_train_dataset = tf_train_dataset.batch(5)
-    #
-    #    tf_val_dataset = tf.data.Dataset.from_tensor_slices((val_images,
-    #                                                         val_labels))
-    #    tf_val_dataset = tf_val_dataset.map(reader)
-    #    tf_val_dataset = tf_val_dataset.repeat(10)
-    #    tf_val_dataset = tf_val_dataset.batch(5)
-
-    #    return tf_train_dataset, tf_val_dataset
-
-    #    ---------------------------------------------------------------------------
     train_dataset = tf.data.Dataset.from_generator(
         lambda: annotation_generator(
             annotations["annotations"]["train"], input_width, input_height
@@ -138,3 +120,24 @@ def tf_dataloader(config_filepath):
     validation_dataset = validation_dataset.repeat(10)
 
     return train_dataset, validation_dataset
+"""
+
+
+def tf_dataloader_v2(
+    label_file_path, class_map, image_height, image_width, batch_size, shuffle=True
+):
+    # get class_map
+    if label_file_path:
+        annotations = read_label_json(label_file_path)
+        train_dataset = tf.data.Dataset.from_generator(
+            lambda: annotation_generator(
+                annotations,
+                class_map,
+                input_width,
+                input_height,
+            ),
+            (tf.float32, tf.float32),
+        )
+        return train_dataset
+    else:
+        return None

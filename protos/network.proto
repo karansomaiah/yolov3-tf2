@@ -7,6 +7,10 @@ import "protos/residual.proto";
 import "protos/route.proto";
 import "protos/upsample.proto";
 import "protos/yolo.proto";
+import "protos/eval.proto";
+import "protos/train.proto";
+import "protos/modelspecs.proto";
+import "protos/classmap.proto";
 
 message Network {
     repeated Convolution convolutions = 1;
@@ -18,4 +22,8 @@ message Network {
 
 message NetworkDefinition {
     required Network network_def = 1;
+    required Train train_config = 2;
+    required Eval eval_config = 3;
+    required ModelSpecs model_specs = 4;
+    required ClassMap class_def = 5;
 }

@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+package yolov3;
+
+
+message ModelSpecs {
+    required int32 image_height = 1;
+    required int32 image_width = 2;
+    required int32 num_classes = 3;
+}
