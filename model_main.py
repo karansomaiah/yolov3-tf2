@@ -5,7 +5,6 @@ import tensorflow as tf
 
 # random import inits
 from utils import clean_imports, proto_utils
-from models.model_builder import DetectorModel
 import train
 import infer
 
@@ -21,13 +20,13 @@ tf.compat.v1.flags.DEFINE_string(
     """Path to config file to kick off training""",
 )
 tf.compat.v1.flags.DEFINE_bool(
-    "train", True, """Boolean specifying whether to train or not"""
+    "train", False, """Boolean specifying whether to train or not"""
 )
 tf.compat.v1.flags.DEFINE_bool(
-    "evaluate", True, """Boolean specifying whether to evaluate or not"""
+    "evaluate", False, """Boolean specifying whether to evaluate or not"""
 )
 tf.compat.v1.flags.DEFINE_bool(
-    "predict", True, """Boolean specifying whether to predict or not"""
+    "predict", False, """Boolean specifying whether to predict or not"""
 )
 tf.compat.v1.flags.DEFINE_string(
     "checkpoint_path",
@@ -50,7 +49,7 @@ def scheduler(config_protobuf, is_training, is_evaluating, if_predicting):
     # dataset)
     # 4. infer
     if is_training or is_evaluating:
-        train.trainer()
+        train.trainer(config_protobuf, is_training, is_evaluating)
 
 
 def main(argv):
@@ -60,7 +59,7 @@ def main(argv):
     # get arguments
     config_filepath = FLAGS.config_filepath
     is_training = bool(FLAGS.train)
-    is_evaluating = bool(FLAGS.train)
+    is_evaluating = bool(FLAGS.evaluate)
     is_predicting = bool(FLAGS.predict)
 
     # read the config file

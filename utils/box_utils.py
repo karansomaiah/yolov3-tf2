@@ -21,11 +21,11 @@ def overlap_tf(x1, w1, x2, w2):
     x2 = tf.transpose(tf.broadcast_to(x2, [num_1, num_2]))
     w2 = tf.transpose(tf.broadcast_to(w2, [num_1, num_2]))
 
-    l1 = x1 - (w1/2)
-    l2 = x2 - (w2/2)
+    l1 = x1 - (w1 / 2)
+    l2 = x2 - (w2 / 2)
     left = tf.math.maximum(l1, l2)
-    r1 = x1 + (w1/2)
-    r2 = x2 + (w2/2)
+    r1 = x1 + (w1 / 2)
+    r2 = x2 + (w2 / 2)
     right = tf.math.minimum(r1, r2)
     return right - left
 
@@ -71,4 +71,4 @@ def box_iou_tf(box_a, box_b):
     :param box_a:
     :param box_b:
     """
-    return box_intersection_tf(box_a, box_b)/box_union_tf(box_a, box_b)
+    return box_intersection_tf(box_a, box_b) / box_union_tf(box_a, box_b)

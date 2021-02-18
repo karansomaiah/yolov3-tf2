@@ -4,14 +4,17 @@ from tensorflow.keras.layers import Conv2D, Reshape, Layer
 class YoloLayer(Layer):
     """Yolo Detection Layer."""
 
-    def __init__(self, anchors,
-                 num_classes=1,
-                 num=3,
-                 jitter=0.3,
-                 ignore_threshold=0.7,
-                 truth_threshold=1.0,
-                 random=1
-                 **kwargs):
+    def __init__(
+        self,
+        anchors,
+        num_classes=1,
+        num=3,
+        jitter=0.3,
+        ignore_threshold=0.7,
+        truth_threshold=1.0,
+        random=1,
+        **kwargs
+    ):
         super(YoloLayer, self).__init__()
         self.anchors = anchors
         self.num_classes = num_classes
@@ -30,5 +33,3 @@ class YoloLayer(Layer):
 
     def call(self, inputs):
         return self.yolo_layer(inputs)
-
-

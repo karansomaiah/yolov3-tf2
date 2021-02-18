@@ -1,0 +1,1 @@
+[{"image_path": "data/sample/dog.jpg", "bboxes": [[212, 215, 195, 240]], "classes": ["Dog"]}, {"image_path": "data/sample/dog2.jpg", "bboxes": [[157, 215, 165, 240], [297, 222, 160, 246]], "classes": ["Dog", "Dog"]}]

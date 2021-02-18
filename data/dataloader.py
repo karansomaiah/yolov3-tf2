@@ -15,7 +15,7 @@ from PIL import Image
 
 def generate_class_map(config):
     return {
-        class_proto.class_name: class_proto.clas_id for class_proto in config.class_map
+        class_proto.class_name: class_proto.class_id for class_proto in config.class_map
     }
 
 
@@ -76,9 +76,9 @@ def annotation_generator(
             batched_images_as_list.append(image)
 
         # combine them
-        batch_images = np.stack(batched_images_as_list, axis=0)
+        batch_images = np.stack(batched_images_as_list, axis=0) / 255
         batch_labels = np.concatenate(batched_labels_as_list, axis=0)
-        yield batch_images, batch_labels
+        yield (batch_images, batch_labels)
 
 
 """
@@ -96,7 +96,7 @@ def combine(images, labels):
     return images, tf.concat(labels_list_with_batch, axis=0)
 """
 
-""" 
+"""
 @DEPRACATED
 def tf_dataloader(config_filepath):
     # Get Values from the config
@@ -131,10 +131,7 @@ def tf_dataloader_v2(
         annotations = read_label_json(label_file_path)
         train_dataset = tf.data.Dataset.from_generator(
             lambda: annotation_generator(
-                annotations,
-                class_map,
-                input_width,
-                input_height,
+                annotations, class_map, image_width, image_height, batch_size
             ),
             (tf.float32, tf.float32),
         )

@@ -7,7 +7,8 @@ message Train {
     required int32 epochs = 2;
     required int32 batch_size = 3;
     required Optimizer optimizer_config = 4;
-    optional string fine_tune_checkpoint = 6 [default = ""];
+    optional string fine_tune_checkpoint = 5 [default = ""];
+    required string log = 6;
 }
 
 message TrainConfig {

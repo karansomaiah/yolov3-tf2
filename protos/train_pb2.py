@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yolov3',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=_b('\n\x12protos/train.proto\x12\x06yolov3\"\x89\x01\n\x05Train\x12\x0f\n\x07\x64\x61taset\x18\x01 \x02(\t\x12\x0e\n\x06\x65pochs\x18\x02 \x02(\x05\x12\x12\n\nbatch_size\x18\x03 \x02(\x05\x12+\n\x10optimizer_config\x18\x04 \x02(\x0b\x32\x11.yolov3.Optimizer\x12\x1e\n\x14\x66ine_tune_checkpoint\x18\x06 \x01(\t:\x00\"2\n\x0bTrainConfig\x12#\n\x0ctrain_config\x18\x01 \x02(\x0b\x32\r.yolov3.Train\"\xfb\x04\n\tOptimizer\x12\x37\n\x12\x61\x64\x61\x64\x65lta_optimizer\x18\x01 \x01(\x0b\x32\x19.yolov3.AdaDeltaOptimizerH\x00\x12\x35\n\x11\x61\x64\x61grad_optimizer\x18\x02 \x01(\x0b\x32\x18.yolov3.AdaGradOptimizerH\x00\x12/\n\x0e\x61\x64\x61m_optimizer\x18\x03 \x01(\x0b\x32\x15.yolov3.AdamOptimizerH\x00\x12\x31\n\x0fnadam_optimizer\x18\x04 \x01(\x0b\x32\x16.yolov3.NadamOptimizerH\x00\x12\x35\n\x11rmsprop_optimizer\x18\x05 \x01(\x0b\x32\x18.yolov3.RMSPropOptimizerH\x00\x12.\n\rsgd_optimizer\x18\x06 \x01(\x0b\x32\x15.yolov3.SGDOptimizierH\x00\x12\x37\n\x11\x65xponential_decay\x18\x07 \x01(\x0b\x32\x1a.yolov3.ExponentialDecayLRH\x01\x12\x37\n\x11inversetime_decay\x18\x08 \x01(\x0b\x32\x1a.yolov3.InverseTimeDecayLRH\x01\x12\x44\n\x18piecewise_constant_decay\x18\t \x01(\x0b\x32 .yolov3.PieceWiseConstantDecayLRH\x01\x12\x35\n\x10polynomial_decay\x18\n \x01(\x0b\x32\x19.yolov3.PolynomialDecayLRH\x01\x12&\n\x08\x63onstant\x18\x0b \x01(\x0b\x32\x12.yolov3.ConstantLRH\x01\x42\x0b\n\toptimizerB\x0f\n\rlearning_rate\"\\\n\x11\x41\x64\x61\x44\x65ltaOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x11\n\x03rho\x18\x02 \x01(\x02:\x04\x30.95\x12\x16\n\x07\x65psilon\x18\x03 \x01(\x02:\x05\x31\x65-07\"p\n\x10\x41\x64\x61GradOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12&\n\x19initial_accumulator_value\x18\x02 \x01(\x02:\x03\x30.1\x12\x16\n\x07\x65psilon\x18\x03 \x01(\x02:\x05\x31\x65-07\"\x89\x01\n\rAdamOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x06\x62\x65ta_1\x18\x02 \x01(\x02:\x03\x30.9\x12\x15\n\x06\x62\x65ta_2\x18\x03 \x01(\x02:\x05\x30.999\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\x12\x16\n\x07\x61msgrad\x18\x05 \x01(\x08:\x05\x66\x61lse\"s\n\x0f\x41\x64\x61maxOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x06\x62\x65ta_1\x18\x02 \x01(\x02:\x03\x30.9\x12\x15\n\x06\x62\x65ta_2\x18\x03 \x01(\x02:\x05\x30.999\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\"r\n\x0eNadamOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x06\x62\x65ta_1\x18\x02 \x01(\x02:\x03\x30.9\x12\x15\n\x06\x62\x65ta_2\x18\x03 \x01(\x02:\x05\x30.999\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\"\x88\x01\n\x10RMSPropOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x10\n\x03rho\x18\x02 \x01(\x02:\x03\x30.9\x12\x13\n\x08momentum\x18\x03 \x01(\x02:\x01\x30\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\x12\x17\n\x08\x63\x65ntered\x18\x05 \x01(\x08:\x05\x66\x61lse\"[\n\rSGDOptimizier\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x08momentum\x18\x02 \x01(\x02:\x01\x30\x12\x17\n\x08nesterov\x18\x03 \x01(\x08:\x05\x66\x61lse\"v\n\x12\x45xponentialDecayLR\x12\x1d\n\x15initial_learning_rate\x18\x01 \x02(\x02\x12\x13\n\x0b\x64\x65\x63\x61y_steps\x18\x02 \x02(\x05\x12\x12\n\ndecay_rate\x18\x03 \x02(\x02\x12\x18\n\tstaircase\x18\x04 \x01(\x08:\x05\x66\x61lse\"v\n\x12InverseTimeDecayLR\x12\x1d\n\x15initial_learning_rate\x18\x01 \x02(\x02\x12\x13\n\x0b\x64\x65\x63\x61y_steps\x18\x02 \x02(\x05\x12\x12\n\ndecay_rate\x18\x03 \x02(\x02\x12\x18\n\tstaircase\x18\x04 \x01(\x08:\x05\x66\x61lse\">\n\x18PieceWiseConstantDecayLR\x12\x12\n\nboundaries\x18\x01 \x03(\x05\x12\x0e\n\x06values\x18\x02 \x03(\x02\"\x92\x01\n\x11PolynomialDecayLR\x12\x1d\n\x15initial_learning_rate\x18\x01 \x02(\x02\x12\x13\n\x0b\x64\x65\x63\x61y_steps\x18\x02 \x02(\x05\x12!\n\x11\x65nd_learning_rate\x18\x03 \x01(\x02:\x06\x30.0001\x12\x10\n\x05power\x18\x04 \x01(\x02:\x01\x31\x12\x14\n\x05\x63ycle\x18\x05 \x01(\x08:\x05\x66\x61lse\"*\n\nConstantLR\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001')
+  serialized_pb=_b('\n\x12protos/train.proto\x12\x06yolov3\"\x96\x01\n\x05Train\x12\x0f\n\x07\x64\x61taset\x18\x01 \x02(\t\x12\x0e\n\x06\x65pochs\x18\x02 \x02(\x05\x12\x12\n\nbatch_size\x18\x03 \x02(\x05\x12+\n\x10optimizer_config\x18\x04 \x02(\x0b\x32\x11.yolov3.Optimizer\x12\x1e\n\x14\x66ine_tune_checkpoint\x18\x05 \x01(\t:\x00\x12\x0b\n\x03log\x18\x06 \x02(\t\"2\n\x0bTrainConfig\x12#\n\x0ctrain_config\x18\x01 \x02(\x0b\x32\r.yolov3.Train\"\xfb\x04\n\tOptimizer\x12\x37\n\x12\x61\x64\x61\x64\x65lta_optimizer\x18\x01 \x01(\x0b\x32\x19.yolov3.AdaDeltaOptimizerH\x00\x12\x35\n\x11\x61\x64\x61grad_optimizer\x18\x02 \x01(\x0b\x32\x18.yolov3.AdaGradOptimizerH\x00\x12/\n\x0e\x61\x64\x61m_optimizer\x18\x03 \x01(\x0b\x32\x15.yolov3.AdamOptimizerH\x00\x12\x31\n\x0fnadam_optimizer\x18\x04 \x01(\x0b\x32\x16.yolov3.NadamOptimizerH\x00\x12\x35\n\x11rmsprop_optimizer\x18\x05 \x01(\x0b\x32\x18.yolov3.RMSPropOptimizerH\x00\x12.\n\rsgd_optimizer\x18\x06 \x01(\x0b\x32\x15.yolov3.SGDOptimizierH\x00\x12\x37\n\x11\x65xponential_decay\x18\x07 \x01(\x0b\x32\x1a.yolov3.ExponentialDecayLRH\x01\x12\x37\n\x11inversetime_decay\x18\x08 \x01(\x0b\x32\x1a.yolov3.InverseTimeDecayLRH\x01\x12\x44\n\x18piecewise_constant_decay\x18\t \x01(\x0b\x32 .yolov3.PieceWiseConstantDecayLRH\x01\x12\x35\n\x10polynomial_decay\x18\n \x01(\x0b\x32\x19.yolov3.PolynomialDecayLRH\x01\x12&\n\x08\x63onstant\x18\x0b \x01(\x0b\x32\x12.yolov3.ConstantLRH\x01\x42\x0b\n\toptimizerB\x0f\n\rlearning_rate\"\\\n\x11\x41\x64\x61\x44\x65ltaOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x11\n\x03rho\x18\x02 \x01(\x02:\x04\x30.95\x12\x16\n\x07\x65psilon\x18\x03 \x01(\x02:\x05\x31\x65-07\"p\n\x10\x41\x64\x61GradOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12&\n\x19initial_accumulator_value\x18\x02 \x01(\x02:\x03\x30.1\x12\x16\n\x07\x65psilon\x18\x03 \x01(\x02:\x05\x31\x65-07\"\x89\x01\n\rAdamOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x06\x62\x65ta_1\x18\x02 \x01(\x02:\x03\x30.9\x12\x15\n\x06\x62\x65ta_2\x18\x03 \x01(\x02:\x05\x30.999\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\x12\x16\n\x07\x61msgrad\x18\x05 \x01(\x08:\x05\x66\x61lse\"s\n\x0f\x41\x64\x61maxOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x06\x62\x65ta_1\x18\x02 \x01(\x02:\x03\x30.9\x12\x15\n\x06\x62\x65ta_2\x18\x03 \x01(\x02:\x05\x30.999\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\"r\n\x0eNadamOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x06\x62\x65ta_1\x18\x02 \x01(\x02:\x03\x30.9\x12\x15\n\x06\x62\x65ta_2\x18\x03 \x01(\x02:\x05\x30.999\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\"\x88\x01\n\x10RMSPropOptimizer\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x10\n\x03rho\x18\x02 \x01(\x02:\x03\x30.9\x12\x13\n\x08momentum\x18\x03 \x01(\x02:\x01\x30\x12\x16\n\x07\x65psilon\x18\x04 \x01(\x02:\x05\x31\x65-07\x12\x17\n\x08\x63\x65ntered\x18\x05 \x01(\x08:\x05\x66\x61lse\"[\n\rSGDOptimizier\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001\x12\x13\n\x08momentum\x18\x02 \x01(\x02:\x01\x30\x12\x17\n\x08nesterov\x18\x03 \x01(\x08:\x05\x66\x61lse\"v\n\x12\x45xponentialDecayLR\x12\x1d\n\x15initial_learning_rate\x18\x01 \x02(\x02\x12\x13\n\x0b\x64\x65\x63\x61y_steps\x18\x02 \x02(\x05\x12\x12\n\ndecay_rate\x18\x03 \x02(\x02\x12\x18\n\tstaircase\x18\x04 \x01(\x08:\x05\x66\x61lse\"v\n\x12InverseTimeDecayLR\x12\x1d\n\x15initial_learning_rate\x18\x01 \x02(\x02\x12\x13\n\x0b\x64\x65\x63\x61y_steps\x18\x02 \x02(\x05\x12\x12\n\ndecay_rate\x18\x03 \x02(\x02\x12\x18\n\tstaircase\x18\x04 \x01(\x08:\x05\x66\x61lse\">\n\x18PieceWiseConstantDecayLR\x12\x12\n\nboundaries\x18\x01 \x03(\x05\x12\x0e\n\x06values\x18\x02 \x03(\x02\"\x92\x01\n\x11PolynomialDecayLR\x12\x1d\n\x15initial_learning_rate\x18\x01 \x02(\x02\x12\x13\n\x0b\x64\x65\x63\x61y_steps\x18\x02 \x02(\x05\x12!\n\x11\x65nd_learning_rate\x18\x03 \x01(\x02:\x06\x30.0001\x12\x10\n\x05power\x18\x04 \x01(\x02:\x01\x31\x12\x14\n\x05\x63ycle\x18\x05 \x01(\x08:\x05\x66\x61lse\"*\n\nConstantLR\x12\x1c\n\rlearning_rate\x18\x01 \x01(\x02:\x05\x30.001')
 )
 
 
@@ -62,8 +62,15 @@ _TRAIN = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='fine_tune_checkpoint', full_name='yolov3.Train.fine_tune_checkpoint', index=4,
-      number=6, type=9, cpp_type=9, label=1,
+      number=5, type=9, cpp_type=9, label=1,
       has_default_value=True, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='log', full_name='yolov3.Train.log', index=5,
+      number=6, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -80,7 +87,7 @@ _TRAIN = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=31,
-  serialized_end=168,
+  serialized_end=181,
 )
 
 
@@ -110,8 +117,8 @@ _TRAINCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=170,
-  serialized_end=220,
+  serialized_start=183,
+  serialized_end=233,
 )
 
 
@@ -217,8 +224,8 @@ _OPTIMIZER = _descriptor.Descriptor(
       name='learning_rate', full_name='yolov3.Optimizer.learning_rate',
       index=1, containing_type=None, fields=[]),
   ],
-  serialized_start=223,
-  serialized_end=858,
+  serialized_start=236,
+  serialized_end=871,
 )
 
 
@@ -262,8 +269,8 @@ _ADADELTAOPTIMIZER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=860,
-  serialized_end=952,
+  serialized_start=873,
+  serialized_end=965,
 )
 
 
@@ -307,8 +314,8 @@ _ADAGRADOPTIMIZER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=954,
-  serialized_end=1066,
+  serialized_start=967,
+  serialized_end=1079,
 )
 
 
@@ -366,8 +373,8 @@ _ADAMOPTIMIZER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1069,
-  serialized_end=1206,
+  serialized_start=1082,
+  serialized_end=1219,
 )
 
 
@@ -418,8 +425,8 @@ _ADAMAXOPTIMIZER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1208,
-  serialized_end=1323,
+  serialized_start=1221,
+  serialized_end=1336,
 )
 
 
@@ -470,8 +477,8 @@ _NADAMOPTIMIZER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1325,
-  serialized_end=1439,
+  serialized_start=1338,
+  serialized_end=1452,
 )
 
 
@@ -529,8 +536,8 @@ _RMSPROPOPTIMIZER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1442,
-  serialized_end=1578,
+  serialized_start=1455,
+  serialized_end=1591,
 )
 
 
@@ -574,8 +581,8 @@ _SGDOPTIMIZIER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1580,
-  serialized_end=1671,
+  serialized_start=1593,
+  serialized_end=1684,
 )
 
 
@@ -626,8 +633,8 @@ _EXPONENTIALDECAYLR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1673,
-  serialized_end=1791,
+  serialized_start=1686,
+  serialized_end=1804,
 )
 
 
@@ -678,8 +685,8 @@ _INVERSETIMEDECAYLR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1793,
-  serialized_end=1911,
+  serialized_start=1806,
+  serialized_end=1924,
 )
 
 
@@ -716,8 +723,8 @@ _PIECEWISECONSTANTDECAYLR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1913,
-  serialized_end=1975,
+  serialized_start=1926,
+  serialized_end=1988,
 )
 
 
@@ -775,8 +782,8 @@ _POLYNOMIALDECAYLR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1978,
-  serialized_end=2124,
+  serialized_start=1991,
+  serialized_end=2137,
 )
 
 
@@ -806,8 +813,8 @@ _CONSTANTLR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2126,
-  serialized_end=2168,
+  serialized_start=2139,
+  serialized_end=2181,
 )
 
 _TRAIN.fields_by_name['optimizer_config'].message_type = _OPTIMIZER
