@@ -4,8 +4,8 @@
 import numpy as np
 import tensorflow as tf
 
-from utils.box_utils import box_iou_tf
-from utils.utils import INT, FLOAT, BOOL
+#from utils.box_utils import box_iou_tf
+#from utils.utils import INT, FLOAT, BOOL
 
 
 def overlap_tf(x1, w1, x2, w2):
@@ -64,8 +64,9 @@ def getLoss(
 
     def loss(y_true, y_pred):
         # staging
-        # print("y_true {}".format(y_true.shape))
-        # print("y_pred {}".format(y_pred.shape))
+        print("y_true {}".format(y_true.shape))
+        print("y_pred {}".format(y_pred.shape))
+        print("anchors: {}".format(anchor_tensor))
 
         input_dims = tf.cast(
             tf.broadcast_to([[image_width, image_height]], tf.shape(anchor_tensor)),
@@ -139,6 +140,7 @@ def getLoss(
             shape=[batch_size, top_k, num_anchors],
         )
         iou_argmax_per_anchor = tf.argmax(iou_reshape, axis=-1, output_type=tf.int32)
+        print("iou_reshape: {}".format(iou_reshape))
 
         # ground truth bounding box
         gt_bb = y_true[:, :, :-1]  # only x, y, w, h
@@ -156,6 +158,7 @@ def getLoss(
             ],
             axis=-1,
         )
+
         # print("ba: {}".format(broadcasted_anchors.shape))
         # print("id: {}".format(selected_anchors_per_gt.shape))
         best_anchors_per_gt = tf.gather_nd(
@@ -171,6 +174,7 @@ def getLoss(
             axis=-1,
         )
         gt_indices = tf.boolean_mask(tensor=indices_to_subset, mask=is_gt)
+        print("gt_indices: {}".format(gt_indices))
 
         # @To-Do Clean up offset creation.
         # get the predicted bboxes and calculate MSE LOSS
@@ -313,6 +317,13 @@ def getLoss(
             + (noobjectness_loss * 100.0)
             + (classification_loss * 1.0)
         )
+        
+        print("localization_loss: {}".format(localization_loss))
+        print("objectnesss_loss: {}".format(objectnesss_loss))
+        print("noobjectness_loss: {}".format(noobjectness_loss))
+        print("classification_loss: {}".format(classification_loss))
+        print("total_loss: {}".format(total_loss))
+        
         return total_loss
 
     return loss

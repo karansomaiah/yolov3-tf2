@@ -1,5 +1,4 @@
 import tensorflow as tf
-import tensorflow.keras as keras
 from tensorflow.keras.layers import Conv2D, Layer, BatchNormalization
 
 activation_fn_map = {
@@ -47,8 +46,10 @@ class ConvolutionLayer(Layer):
             padding="same",
             data_format="channels_last",
         )
-        self.bn = BatchNormalization
+        self.bn = BatchNormalization()
         self.activation_fn = activation_fn_map[activation_int]
 
     def call(self, inputs):
-        return self.activation_fn(self.convolution_layer(inputs))
+        x = self.convolution_layer(inputs)
+        x = self.bn(x)
+        return self.activation_fn(x)

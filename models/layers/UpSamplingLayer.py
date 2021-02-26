@@ -8,7 +8,7 @@ upsampling_map = {1: UpSampling1D, 2: UpSampling2D, 3: UpSampling3D}
 
 
 class UpSamplingLayer(Layer):
-    def __init__(self, factor=2):
+    def __init__(self, factor=2, **kwargs):
         super(UpSamplingLayer, self).__init__()
         self.factor = factor
         self.upsample_layer = UpSampling2D(

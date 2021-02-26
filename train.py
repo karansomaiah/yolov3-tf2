@@ -7,16 +7,12 @@ Contains a trainer method which triggers any of the following:
     3. Evaluation
 """
 import os
-import numpy as np
 import tensorflow as tf
 
 import enum
 
-# from models.model_builder import DetectorModel
 from models.model_builder_v2 import build
 
-# from models.loss.detection_loss import DetectionLoss as DetectionLossV1
-# from models.loss.detection_loss2 import DetectionLoss as DetectionLossV2
 from models.loss.detection_loss_v2 import getLoss as DetectionLoss
 from models import optimizer_builder
 from data import dataloader_v2
@@ -31,7 +27,7 @@ class MODE(enum.Enum):
 def decay(epoch):
     if epoch < 3:
         return 1e-3
-    elif epoch >= 3 and epochj < 7:
+    elif epoch >= 3 and epoch < 7:
         return 1e-4
     else:
         return 1e-5
@@ -76,39 +72,12 @@ def trainer(config, is_training, is_evaluating):
     # define the strategy
     strategy = tf.distribute.MirroredStrategy()
 
-    # with strategy.scope():
-    #    model, inputs, outputs, anchors = build(
-    #        config, input_shape_without_batch, batch_size_train
-    #    )
-    #    model.summary()
-
-    #    losses = []
-    #    for anchor_index, scale_anchor_list in enumerate(anchors):
-    #        losses.append(
-    #            DetectionLossV2(
-    #                image_height, image_width, num_classes, scale_anchor_list
-    #            )
-    #        )
-
-    #    optimizer = optimizer_builder.build(config.train_config.optimizer_config)
-    #    if mode != MODE.EVAL:
-    #        saver = tf.train.Checkpoint(optimizer=optimizer, model=model)
-    #    else:
-    #        saver = tf.train.Checkpoint(model=model)
-
-    #    model.compile(optimizer=optimizer, loss=losses)
-
-    # OLD CODE
     # initialize the model here
     with strategy.scope():
         if mode == MODE.TRAIN:
             model, inputs, outputs, anchors = build(
                 config, input_shape_without_batch, batch_size_train
             )
-            # model = DetectorModel(config, num_classes)
-            # model, anchors_list = model.build_model(
-            #    input_shape_without_batch, batch_size_train
-            # )
             assert (
                 train_data and not eval_data
             ), "train_data should exist without eval_data."
@@ -117,10 +86,6 @@ def trainer(config, is_training, is_evaluating):
             model, inputs, outputs, anchors = build(
                 config, input_shape_without_batch, batch_size_train
             )
-            # model = DetectorModel(config, num_classes)
-            # model, anchors_list = model.build_model(
-            #    input_shape_without_batch, batch_size_train
-            # )
             assert (
                 train_data and eval_data
             ), "train_data and eval_data should both exist."
@@ -129,16 +94,23 @@ def trainer(config, is_training, is_evaluating):
             model, inputs, outputs, anchors = build(
                 config, input_shape_without_batch, batch_size_train
             )
-            # model = DetectorModel(config, num_classes)
-            # model, anchors_list = model.build_model(
-            #    input_shape_without_batch, batch_size_eval
-            # )
             assert (
                 not train_data and eval_data
             ), "eval_data should exist without train_data"
 
         # set the image/input layer as non-trainable
         print(model.summary())
+        #with open('training_logs/model_info.txt', 'w') as f:
+        #    for layer in model.layers:
+        #        f.write("Layer name: {}\n".format(layer.name))
+        #        f.write("all weights:\n")
+        #        for weight in layer.weights:
+        #            f.write(weight.name + "\n")
+        #        f.write("trainable_weights\n")
+        #        for weight in layer.trainable_weights:
+        #            f.write(weight.name + "\n")
+        #        f.write("\n")
+        #    f.write("\n")
 
         loss_fn_anchors_large = DetectionLoss(
             batch_size_train,
@@ -168,10 +140,6 @@ def trainer(config, is_training, is_evaluating):
 
         # get the optimizer
         optimizer = optimizer_builder.build(config.train_config.optimizer_config)
-        #        if mode != MODE.EVAL:
-        #            saver = tf.train.Checkpoint(optimizer=optimizer, model=model)
-        #        else:
-        #            saver = tf.train.Checkpoint(model=model)
 
         model.compile(
             loss_fn1=loss_fn_anchors_large,
@@ -180,7 +148,6 @@ def trainer(config, is_training, is_evaluating):
             optimizer=optimizer,
             run_eagerly=True,
         )
-        # model.compile(optimizer=optimizer, loss=losses)
 
         if not os.path.isdir(config.train_config.log):
             os.makedirs(config.train_config.log)
@@ -204,7 +171,7 @@ def trainer(config, is_training, is_evaluating):
 
         model.fit(
             x=train_data,
-            epochs=50,
+            epochs=num_epochs,
             verbose=1,
             callbacks=callbacks,
             validation_data=eval_data,

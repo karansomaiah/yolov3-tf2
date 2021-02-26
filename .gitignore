@@ -1,2 +1,4 @@
 **/.vscode
 **/*.pyc
+training_logs/
+yolov3_tf2.egg-info/

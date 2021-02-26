@@ -1,16 +1,14 @@
 import os
-import sys
-
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import tensorflow as tf
-
+tf.get_logger().setLevel('ERROR')
+import sys
 # random import inits
 from utils import clean_imports, proto_utils
 import train
 import infer
 
 clean_imports.clean()  # remove ros opencv
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
 
 FLAGS = tf.compat.v1.flags.FLAGS
 # Flags are defined in the format 'attribute','default_value', """Description"""

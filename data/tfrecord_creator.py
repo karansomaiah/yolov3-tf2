@@ -1,43 +1,110 @@
 #!/usr/bin/env python
-import os
+import json
 import numpy as np
 import tensorflow as tf
 
 import PIL
 from PIL import Image
 
+from utils import proto_utils
+import dataloader_v2 as dataloader
+
+# defining input argument flags
+FLAGS = tf.compat.v1.flags.FLAGS
+
+# args for config file which contains class map
+tf.compat.v1.flags.DEFINE_string(
+    "config_filepath",
+    "./configs/darknet53.config",
+    """Path to config file"""
+    """ which consists of the training and validation config""",
+)
+# args for providing the path to the annotation file
+tf.compat.v1.flags.DEFINE_string(
+    "annotation_file",
+    "",
+    """Path to the annotation file""",
+)
+# args for providing the path to output the record file,
+# else saves in the current path
+tf.compat.v1.flags.DEFINE_string(
+    "output_path",
+    "dataset.record",
+    """Path to write the TensorflowRecord file to.""",
+)
+
 
 def _bytes_feature(value):
-    """Returns a bytes_list from a string / byte."""
+    """_bytes_feature.
+    Returns a bytes_list from a string / byte.
+
+    :param value: value to be converted to a bytes feature
+    """
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
 def _bytes_feature_list(value):
-    """Returns a bytes_list from a string / byte."""
+    """_bytes_feature_list.
+    Returns a bytes_list from a string / byte.
+
+    :param value: list of values to be converted to a bytes feature
+    """
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
 
 def _float_feature(value):
-    """Returns a float_list from a float / double."""
+    """_float_feature.
+    Returns a float_list from a float / double.
+
+    :param value: value to be converted to a float feature
+    """
     return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
 
 
 def _float_feature_list(value):
-    """Returns a float_list from a float / double."""
+    """_float_feature_list.
+    Returns a float_list from a float / double.
+
+    :param value: list of values to be converted to a float feature
+    """
     return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 
 def _int64_feature(value):
-    """Returns an int64_list from a bool / enum / int / uint."""
+    """_int64_feature.
+    Returns an int64_list from a bool / enum / int / uint.
+
+    :param value: value to be converted into a int64 feature
+    """
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
 def _int64_feature_list(value):
-    """Returns an int64_list from a bool / enum / int / uint."""
+    """_int64_feature_list.
+    Returns an int64_list from a bool / enum / int / uint.
+
+    :param value: list of values to be converted into a int64 feature
+    """
     return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 
 def get_serialized_example(filename, annotation, input_width, input_height):
+    """get_serialized_example.
+    Serializes each annotation into a Tensorflow example.
+        i.e. tf.train.Example()
+
+    :param filename: string describing the filename
+    :param annotation: a dictionary with keys storing the annotation 
+                       for the current image.
+                       example:
+                        {
+                            'bb': [[0, 0, 0, 0],
+                                   [10, 20, 30, 40]],
+                            'classes': ['Dog', 'Cat']
+                        }
+    :param input_width: the input image width for training.
+    :param input_height: the input image height for training.
+    """
     # image stuff
     image = Image.open(filename)
     image = image.resize(size=(input_width, input_height), resample=PIL.Image.LANCZOS)
@@ -72,7 +139,18 @@ def get_serialized_example(filename, annotation, input_width, input_height):
     )
 
 
-def write_tfrecords(record_path, annotation_dict, input_width, input_height):
+def write_tfrecords(record_path, annotation_dict, class_map, input_width, input_height):
+    """write_tfrecords.
+    Function to write Tensorflow records given a file path, a list of annotations,
+    a dictionary mapping classes to integers, and the image dimensions.
+
+    :param record_path: string describing the output file path.
+    :param annotation_dict: dictionary holding the list of annotations 
+                            to be written to a Tensorflow Record File.
+    :param class_map: dictionary storing mapping from string classes to integers.
+    :param input_width: input image width.
+    :param input_height: input image height. 
+    """
     """
     Processes the dictionary containing annotation information
     and returns classes dictionary, as well as the annotation
@@ -103,65 +181,32 @@ def write_tfrecords(record_path, annotation_dict, input_width, input_height):
     return
 
 
-# def write_tfrecords(directory, annotation_dict, input_width, input_height):
-#    """
-#    Processes the dictionary containing annotation information
-#    and returns classes dictionary, as well as the annotation
-#    """
-#    class_map = annotation_dict["classes"]
-#    annotations = annotation_dict["annotations"]
-#
-#    if 'train' in annotations.keys():
-#        train_filename = os.path.join(directory, "train.record")
-#        with tf.io.TFRecordWriter(train_filename) as record_writer:
-#            for annotation_object in annotations["train"]:
-#                current_filename = annotation_object["image_path"]
-#                current_annotation = {
-#                    "bboxes": [
-#                        [
-#                            box[0] / input_height,
-#                            box[1] / input_width,
-#                            box[2] / input_height,
-#                            box[3] / input_width,
-#                        ]
-#                        for box in annotation_object["bboxes"]
-#                    ],
-#                    "classes": [
-#                        class_map[class_label]
-#                        for class_label in annotation_object["classes"]
-#                    ],
-#                }
-#                example = get_serialized_example(current_filename,
-#                                                 current_annotation,
-#                                                 input_width,
-#                                                 input_height)
-#                record_writer.write(example.SerializeToString())
-#        print("Completed Writing TFRecord {}".format(train_filename))
-#
-#    if 'validation' in annotations.keys():
-#        validation_filename = os.path.join(directory, "validation.record")
-#        with tf.io.TFRecordWriter(validation_filename) as writer:
-#            for annotation_object in annotations["validation"]:
-#                current_filename = annotation_object["image_path"]
-#                current_annotation = {
-#                    "bboxes": [
-#                        [
-#                            box[0] / input_height,
-#                            box[1] / input_width,
-#                            box[2] / input_height,
-#                            box[3] / input_width,
-#                        ]
-#                        for box in annotation_object["bboxes"]
-#                    ],
-#                    "classes": [
-#                        class_map[class_label]
-#                        for class_label in annotation_object["classes"]
-#                    ],
-#                }
-#                example = get_serialized_example(current_filename,
-#                                                 current_annotation,
-#                                                 input_width,
-#                                                 input_height)
-#                writer.write(example.SerializeToString())
-#        print("Completed Writing TFRecord {}".format(validation_filename))
-#    print("Completed Creating TFRecords")
+def main(argv):
+    """main.
+    Main function running writing to tensorflow records.
+
+    :param argv: arguments provided for training
+    """
+    config_filepath = FLAGS.config_filepath
+    annotation_path = FLAGS.annotation_file
+    output_path = FLAGS.output_path
+
+    # read the config and generate the class map
+    config = proto_utils.read_protobuf_config(config_filepath)
+    class_map = dataloader.generate_class_map(config.class_def)
+
+    # read the annotation file
+    with open(annotation_path, "r") as f:
+        annotations = json.load(f)
+
+    write_tfrecords(
+        output_path,
+        annotations,
+        class_map,
+        config.model_specs.image_width,
+        config.model_specs.image_height,
+    )
+
+
+if __name__ == "__main__":
+    tf.compat.v1.app.run()

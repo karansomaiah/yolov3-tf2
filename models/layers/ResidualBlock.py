@@ -1,6 +1,3 @@
-import tensorflow as tf
-import tensorflow.keras as keras
-
 from tensorflow.keras.layers import Layer
 
 
@@ -14,9 +11,12 @@ class ResidualBlock(Layer):
         self.multiplier = multiplier
 
     def call(self, inputs):
+        print(self.name)
         output = inputs
+        print(inputs.shape)
         for block in self.block_contents:
             for layer in block:
+                print(layer.name)
                 out = layer(output)
             output = output + out
         return output
