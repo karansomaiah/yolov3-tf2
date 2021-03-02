@@ -51,7 +51,5 @@ def build(config):
 
     # create the optimizer
     optimizer = optimizer_config_map[optimizer_string](**optimizer_args)
-    # commenting the above for now, in order to run model.compile and fit.
-    # optimizer = optimizer_config_map[optimizer_string]()
 
     return optimizer  # , learning_rate_scheduler

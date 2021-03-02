@@ -30,54 +30,253 @@ class Detector(tf.keras.Model):
         - test_step
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, anchors=[], evaluator=None, **kwargs):
         """__init__."""
         super().__init__(**kwargs)
+        self.anchors=anchors
+        self.evaluator = evaluator
 
-    def compile(self, loss_fn1, loss_fn2, loss_fn3, **kwargs):
+        # dictionary to store losses and compute average at the end for logging
+        self.train_loss_dict = {
+            'localization_loss': [],
+            'objectness': [],
+            'noobjectness': [],
+            'classification': []
+        }
+        self.eval_loss_dict = {
+            'localization_loss': [],
+            'objectness': [],
+            'noobjectness': [],
+            'classification': []
+        }
+
+        # variables to store the number of steps while
+        # iterating throughout the training and 
+        # validation datasets
+        self.training_dataset_steps = 0
+        self.update_train_ds_steps = True
+        self.evaluation_dataset_steps = 0
+        self.update_eval_ds_steps = True
+        self.n_batches = 0 # number of steps
+        self.n_batches_set = False
+        self.current_epoch = 0
+
+    def compile(self, loss_fn_large, loss_fn_medium, loss_fn_small, **kwargs):
         super().compile(**kwargs)
-        self.loss_fn1 = loss_fn1
-        self.loss_fn2 = loss_fn2
-        self.loss_fn3 = loss_fn3
+        self.loss_fn_large = loss_fn_large
+        self.loss_fn_medium = loss_fn_medium
+        self.loss_fn_small = loss_fn_small
 
     def train_step(self, data):
-        images = data[0]
-        labels = data[1]
+        images, labels = data
+        #images = data[0]
+        #labels = data[1]
+        
         with tf.GradientTape() as tape:
             # get outputs
             outputs = self(images, training=True)
-            output1 = outputs[0]
-            output2 = outputs[1]
-            output3 = outputs[2]
+            output_large = outputs[0]
+            output_medium = outputs[1]
+            output_small = outputs[2]
+            
             # calculate loss
-            loss1 = self.loss_fn1(labels, output1)
-            loss2 = self.loss_fn2(labels, output2)
-            loss3 = self.loss_fn3(labels, output3)
-            loss = loss1 + loss2 + loss3
+            # total_loss, localization_loss, objectness_loss, noobjectness_loss, classification_loss
+            (l_total, l_localization, l_obj, l_noobj, l_classification) = self.loss_fn_large(labels, output_large)
+            (m_total, m_localization, m_obj, m_noobj, m_classification) = self.loss_fn_medium(labels, output_medium)
+            (s_total, s_localization, s_obj, s_noobj, s_classification) = self.loss_fn_small(labels, output_small)
+            
+            # total loss
+            loss = l_total + m_total + s_total
+            self.train_loss_dict['localization_loss'].append(
+                l_localization + m_localization + s_localization
+            )
+            self.train_loss_dict['objectness'].append(
+                l_obj + m_obj + s_obj
+            )
+            self.train_loss_dict['noobjectness'].append(
+                l_noobj + m_noobj + s_noobj
+            )
+            self.train_loss_dict['classification'].append(
+                l_classification + m_classification + s_classification
+            )
+            
             # apply gradients
             gradients = tape.gradient(loss, self.trainable_variables)
             self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+
+            # update dataset counts
+            if self.update_train_ds_steps:
+                self.training_dataset_steps += 1
+            
+            # return
             return {"loss": loss}
 
     def test_step(self, data):
         images, labels = data
+        
         # get outputs
         outputs = self(images, training=True)
-        output1 = outputs[0]
-        output2 = outputs[1]
-        output3 = outputs[2]
+        output_large = outputs[0]
+        output_medium = outputs[1]
+        output_small = outputs[2]
+
         # calculate loss
-        loss1 = self.loss_fn1(labels, output1)
-        loss2 = self.loss_fn2(labels, output2)
-        loss3 = self.loss_fn3(labels, output3)
-        loss = loss1 + loss2 + loss3
+        # total_loss, localization_loss, objectness_loss, noobjectness_loss, classification_loss
+        (l_total, l_localization, l_obj, l_noobj, l_classification) = self.loss_fn_large(labels, output_large)
+        (m_total, m_localization, m_obj, m_noobj, m_classification) = self.loss_fn_medium(labels, output_medium)
+        (s_total, s_localization, s_obj, s_noobj, s_classification) = self.loss_fn_small(labels, output_small)
+
+        # update dataset counts
+        if self.update_eval_ds_steps:
+            self.evaluation_dataset_steps += 1
+        
+        # total loss
+        loss = l_total + m_total + s_total
+        self.eval_loss_dict['localization_loss'].append(
+            l_localization + m_localization + s_localization
+        )
+        self.eval_loss_dict['objectness'].append(
+            l_obj + m_obj + s_obj
+        )
+        self.eval_loss_dict['noobjectness'].append(
+            l_noobj + m_noobj + s_noobj
+        )
+        self.eval_loss_dict['classification'].append(
+            l_classification + m_classification + s_classification
+        )
+
+        # get bounding boxes
+        bboxes, classes, confidences = self.get_bounding_boxes([output_large, output_medium, output_small])
+        bboxes_numpy = tf.expand_dims(bboxes, axis=0).numpy() * 416
+        classes_numpy = tf.expand_dims(tf.transpose(classes), axis=0).numpy() * 416
+        confidences_numpy = tf.expand_dims(tf.transpose(confidences), axis=0).numpy()
+
+        # gt
+        is_gt = tf.where(labels[:, :, -1] == 0.0, False, True)
+        gt_boxes = tf.expand_dims(tf.boolean_mask(labels, mask=is_gt), axis=0).numpy()
+        gt_boxes[..., -1] = gt_boxes[..., -1] - 1
+        gt_boxes[..., :-1] = gt_boxes[..., :-1] * 416
+
+        self.evaluator.consider_batch(
+            batch_gt_boxes=gt_boxes,
+            batch_pred_boxes=bboxes_numpy,
+            batch_pred_scores=confidences_numpy,
+            batch_pred_classes=classes_numpy
+        )
+
         return {"loss": loss}
 
+    def get_bounding_boxes(self, outputs):
+        def get_anchor_wh_offsets(w_index,
+                                h_index,
+                                anchors,
+                                grid_x,
+                                grid_y,
+                                batch_size):
+            anchor_size = anchors.shape[0]
+            w_offsets = tf.broadcast_to(
+                tf.expand_dims(
+                    tf.broadcast_to(
+                        tf.expand_dims(
+                            tf.broadcast_to(
+                                tf.expand_dims(anchors[:, w_index], axis=-1),
+                                [anchor_size, grid_y]),
+                            axis=-1),
+                        [anchor_size, grid_y, grid_x]),
+                    axis=0),
+                [batch_size, anchor_size, grid_y, grid_x]
+            )
 
-def build(model_config, input_shape, batch_size):
+            h_offsets = tf.broadcast_to(
+                tf.expand_dims(
+                    tf.broadcast_to(
+                        tf.expand_dims(
+                            tf.broadcast_to(
+                                tf.expand_dims(anchors[:, h_index], axis=-1),
+                                [anchor_size, grid_y]),
+                            axis=-1),
+                        [anchor_size, grid_y, grid_x]),
+                    axis=0),
+                [batch_size, anchor_size, grid_y, grid_x]
+            )
+            return w_offsets, h_offsets
+
+        def get_bb_per_detection_scale(output, anchor):
+            batch_size, grid_y, grid_x, channels = output.shape
+            num_anchors = len(anchor)
+            
+            output_reshape = tf.reshape(
+                output,
+                [batch_size, num_anchors, grid_y, grid_x, int(channels/num_anchors)]
+            )
+                    
+            intermediate_center_x_offset = tf.broadcast_to(
+                tf.range(grid_x, dtype=tf.float32),
+                [grid_y, grid_x]
+            )   
+            center_x_offsets = tf.broadcast_to(
+                intermediate_center_x_offset,
+                [batch_size, num_anchors, grid_y, grid_x]
+            )   
+            intermediate_center_y_offset = tf.broadcast_to(
+                tf.range(grid_y, dtype=tf.float32),
+                [grid_x, grid_y]
+            )
+            intermediate_center_y_offset = tf.transpose(intermediate_center_y_offset)
+            center_y_offsets = tf.broadcast_to(
+                intermediate_center_y_offset,
+                [batch_size, num_anchors, grid_y, grid_x]
+            )
+            
+            w_offsets, h_offsets = get_anchor_wh_offsets(
+                0, 1, tf.constant(anchor, dtype=tf.float32), grid_x, grid_y, batch_size)
+            
+            predicted_objectness = tf.math.sigmoid(output_reshape[..., 4])
+            predicted_classes = tf.math.sigmoid(output_reshape[..., 5:])
+            
+            pred_x = (tf.math.sigmoid(output_reshape[..., 0]) + center_x_offsets)/grid_x
+            pred_y = (tf.math.sigmoid(output_reshape[..., 1]) + center_y_offsets)/grid_y
+            pred_w = (tf.exp(output_reshape[..., 2]) * w_offsets)/416
+            pred_h = (tf.exp(output_reshape[..., 3]) * h_offsets)/416
+            
+            pred_bboxes = tf.stack(
+                [pred_x, pred_y, pred_w, pred_h], 
+                axis=-1
+            )
+            
+            good_indices = tf.where(predicted_objectness > 0.5)
+            boxes = tf.gather_nd(params=pred_bboxes, indices=good_indices)
+            classes = tf.gather_nd(params=predicted_classes, indices=good_indices)
+            return boxes, classes
+
+        boxes = []
+        classes = []
+        for index, anchor in enumerate(self.anchors):
+            anchor_bboxes, anchor_classes = get_bb_per_detection_scale(outputs[index], self.anchors[index])
+            boxes.append(anchor_bboxes)
+            classes.append(anchor_classes)
+        
+        return_boxes = tf.concat(boxes, axis=0)
+        return_classes = tf.concat(classes, axis=0)
+        return_classes_ints = tf.argmax(return_classes, axis=-1)
+        return_confidences = tf.reduce_max(return_classes, axis=-1)
+        return return_boxes, return_classes_ints, return_confidences
+
+
+def build(model_config, input_shape, batch_size, evaluator):
     inputs = []
     outputs = []
     anchors = []
+    
+    # get anchors
+    for yolo_cfg in model_config.network_def.yolos:
+        anchors_cfg = list(yolo_cfg.anchors)
+        len_anchors_cfg = len(anchors_cfg)
+        anchors_list = [
+            [anchors_cfg[anchor_index * 2], anchors_cfg[(anchor_index * 2) + 1]]
+            for anchor_index in range(int(len_anchors_cfg / 2))
+        ]
+        anchors.append(anchors_list)
 
     # input
     model_input = tf.keras.layers.Input(shape=input_shape, batch_size=batch_size)
@@ -379,7 +578,7 @@ def build(model_config, input_shape, batch_size):
     # YOLO LAYER 1
     yolo1_anchors = [[116, 90], [156, 198], [373, 326]]
     yolo1 = YoloLayer.YoloLayer(
-        anchors=yolo1_anchors,
+        anchors=anchors[0],
         num_classes=1,
         num=3,
         jitter=0.3,
@@ -421,7 +620,7 @@ def build(model_config, input_shape, batch_size):
     )
     yolo2_anchors = [[30, 61], [62, 45], [59, 119]]
     yolo2 = YoloLayer.YoloLayer(
-        anchors=yolo2_anchors,
+        anchors=anchors[1],
         num_classes=1,
         num=3,
         jitter=0.3,
@@ -462,7 +661,7 @@ def build(model_config, input_shape, batch_size):
     )
     yolo3_anchors = [[10, 13], [16, 30], [33, 32]]
     yolo3 = YoloLayer.YoloLayer(
-        anchors=yolo3_anchors,
+        anchors=anchors[2],
         num_classes=1,
         num=3,
         jitter=0.3,
@@ -474,9 +673,9 @@ def build(model_config, input_shape, batch_size):
 
     outputs = [yolo1, yolo2, yolo3]
     inputs = [model_input]
-    anchors = [yolo1_anchors, yolo2_anchors, yolo3_anchors]
+    # anchors = [yolo1_anchors, yolo2_anchors, yolo3_anchors]
 
-    return Detector(inputs=inputs, outputs=outputs), inputs, outputs, anchors
+    return Detector(inputs=inputs, outputs=outputs, anchors=anchors, evaluator=evaluator), inputs, outputs, anchors
 
 
 # class LayerContainer:

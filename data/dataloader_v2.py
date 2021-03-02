@@ -40,7 +40,7 @@ def build(filepath, class_map, image_height, image_width, batch_size, shuffle=Tr
     def features_to_annotation(parsed_feature):
         image = tf.io.decode_raw(input_bytes=parsed_feature["image"], out_type=tf.uint8)
         image_tensor = tf.reshape(image, (image_height, image_width, 3)) / 255
-        labels = tf.cast(tf.sparse.to_dense(parsed_feature["x"]), dtype=tf.float32)
+        labels = tf.cast(tf.sparse.to_dense(parsed_feature["label"]), dtype=tf.float32)
         x = tf.sparse.to_dense(parsed_feature["x"])
         y = tf.sparse.to_dense(parsed_feature["y"])
         w = tf.sparse.to_dense(parsed_feature["w"])

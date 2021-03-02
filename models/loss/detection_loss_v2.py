@@ -63,10 +63,6 @@ def getLoss(
     num_anchors = anchor_tensor.shape[0]
 
     def loss(y_true, y_pred):
-        # staging
-        print("y_true {}".format(y_true.shape))
-        print("y_pred {}".format(y_pred.shape))
-        print("anchors: {}".format(anchor_tensor))
 
         input_dims = tf.cast(
             tf.broadcast_to([[image_width, image_height]], tf.shape(anchor_tensor)),
@@ -75,15 +71,10 @@ def getLoss(
         anchors_normalized = anchor_tensor / input_dims
         is_gt = tf.where(y_true[:, :, -1] == 0.0, False, True)
         batch_size = y_pred.shape[0]
-        # print("b_s: {}".format(batch_size))
         grid_y = y_pred.shape[1]
-        # print("y: {}".format(grid_y))
         grid_x = y_pred.shape[2]
-        # print("x: {}".format(grid_x))
         num_channels = y_pred.shape[3]
-        # print("nc: {}".format(num_channels))
         num_prediction_channels = tf.cast(num_channels / num_anchors, dtype=tf.int32)
-        # print("npc: {}".format(num_prediction_channels))
         broadcasted_anchors = tf.broadcast_to(
             input=anchor_tensor, shape=[batch_size, top_k, num_anchors, 2]
         )
@@ -92,7 +83,7 @@ def getLoss(
             shape=[batch_size, top_k],
         )
         y_pred_reshaped = tf.reshape(
-            y_pred, [batch_size, num_anchors, grid_x, grid_y, num_prediction_channels]
+            y_pred, [batch_size, num_anchors, grid_y, grid_x, num_prediction_channels]
         )
         predicted_bboxes = y_pred_reshaped[..., :4]
         predicted_objectness = tf.math.sigmoid(y_pred_reshaped[..., 4])
@@ -131,16 +122,12 @@ def getLoss(
 
         # get iou between anchors and ground truths
         # get the maximum per anchor
-        # print("anchors_wh: {}".format(anchors_wh.shape))
-        # print("gt_wh: {}".format(gt_wh.shape))
         iou = box_iou_tf(anchors_wh, gt_wh)
-        # print(iou.shape)
         iou_reshape = tf.reshape(
             tensor=iou,
             shape=[batch_size, top_k, num_anchors],
         )
         iou_argmax_per_anchor = tf.argmax(iou_reshape, axis=-1, output_type=tf.int32)
-        print("iou_reshape: {}".format(iou_reshape))
 
         # ground truth bounding box
         gt_bb = y_true[:, :, :-1]  # only x, y, w, h
@@ -159,8 +146,6 @@ def getLoss(
             axis=-1,
         )
 
-        # print("ba: {}".format(broadcasted_anchors.shape))
-        # print("id: {}".format(selected_anchors_per_gt.shape))
         best_anchors_per_gt = tf.gather_nd(
             params=broadcasted_anchors, indices=selected_anchors_per_gt
         )
@@ -174,7 +159,6 @@ def getLoss(
             axis=-1,
         )
         gt_indices = tf.boolean_mask(tensor=indices_to_subset, mask=is_gt)
-        print("gt_indices: {}".format(gt_indices))
 
         # @To-Do Clean up offset creation.
         # get the predicted bboxes and calculate MSE LOSS
@@ -213,19 +197,7 @@ def getLoss(
             [batch_size, num_anchors, grid_y, grid_x],
         )
 
-        # predicted bboxes
-        pred_x = tf.math.sigmoid(predicted_bboxes[..., 0])
-        pred_y = tf.math.sigmoid(predicted_bboxes[..., 1])
-        pred_w = predicted_bboxes[..., 2]
-        pred_h = predicted_bboxes[..., 3]
-
-        # transformed predictions bboxes
-        x = (pred_x + center_x_offsets) / tf.cast(grid_x, dtype=tf.float32)
-        y = (pred_y + center_y_offsets) / tf.cast(grid_y, dtype=tf.float32)
-        w = tf.exp(pred_w) * (w_offsets / image_width)
-        h = tf.exp(pred_h) * (h_offsets / image_height)
-        bounding_box = tf.stack([x, y, w, h], axis=-1)
-        y_pred_bb = tf.gather_nd(params=bounding_box, indices=gt_indices)
+        y_pred_bb = tf.gather_nd(params=predicted_bboxes, indices=gt_indices)
 
         # gt to calculate loss against
         gt_tx = (gt_bb[..., 0] * tf.cast(grid_x, tf.float32)) - tf.cast(
@@ -234,12 +206,13 @@ def getLoss(
         gt_ty = (gt_bb[..., 1] * tf.cast(grid_y, tf.float32)) - tf.cast(
             prior_y, dtype=tf.float32
         )
-        gt_tw = tf.math.log(gt_bb[..., 2]) * (image_width / best_anchors_per_gt[..., 0])
-        gt_th = tf.math.log(gt_bb[..., 3]) * (
+        gt_tw = tf.math.log(gt_bb[..., 2] * (image_width / best_anchors_per_gt[..., 0]))
+        gt_th = tf.math.log(gt_bb[..., 3] * (
             image_height / best_anchors_per_gt[..., 1]
-        )
+        ))
         gt_t = tf.stack([gt_tx, gt_ty, gt_tw, gt_th], axis=-1)
         y_true_bb = tf.boolean_mask(gt_t, is_gt)
+        localization_loss_weight = y_true_bb[:, -2] * y_true_bb[:, -1]
 
         # REGRESSION LOSS
         # @To-Do get a customized loss i.e MSE, BCE, etc. from a config file passed to
@@ -247,7 +220,8 @@ def getLoss(
         mse_loss = tf.keras.losses.MeanSquaredError(
             reduction=tf.keras.losses.Reduction.SUM
         )
-        localization_loss = mse_loss(y_true_bb, y_pred_bb)
+        localization_loss = mse_loss(y_true_bb, y_pred_bb,
+                                     sample_weight=localization_loss_weight)
 
         # Objectness Loss
         candidate_objects_indices = tf.where(iou_reshape > 0.5)
@@ -284,7 +258,7 @@ def getLoss(
         bce = tf.keras.losses.BinaryCrossentropy(
             reduction=tf.keras.losses.Reduction.SUM
         )
-        objectnesss_loss = bce(y_true_objectness, y_pred_objectness)
+        objectness_loss = bce(y_true_objectness, y_pred_objectness)
 
         # No Objectness Loss
         noobj_mask = tf.cast(
@@ -311,19 +285,13 @@ def getLoss(
 
         # @To-Do: Add scaling configs
         # @To-Do: Add callbacks for tensorboard logging
-        total_loss = (
-            (localization_loss * 1.0)
-            + (objectnesss_loss * 1.0)
-            + (noobjectness_loss * 100.0)
-            + (classification_loss * 1.0)
-        )
+        localization_loss = localization_loss * 1.0
+        objectness_loss = objectness_loss * 1.0
+        noobjectness_loss = noobjectness_loss * 100.0
+        classification_loss = classification_loss * 1.0
         
-        print("localization_loss: {}".format(localization_loss))
-        print("objectnesss_loss: {}".format(objectnesss_loss))
-        print("noobjectness_loss: {}".format(noobjectness_loss))
-        print("classification_loss: {}".format(classification_loss))
-        print("total_loss: {}".format(total_loss))
+        total_loss = localization_loss + objectness_loss + noobjectness_loss + classification_loss
         
-        return total_loss
+        return total_loss, localization_loss, objectness_loss, noobjectness_loss, classification_loss
 
     return loss
